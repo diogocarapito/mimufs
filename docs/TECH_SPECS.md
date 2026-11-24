@@ -162,12 +162,15 @@ USF_Exemplo_2024/
 ### 4.1 DuckDB connection
 
 ```python
-duckdb.connect(path, config={
-    "autoinstall_known_extensions": False,   # never download extensions
-    "autoload_known_extensions": False,
-    "allow_community_extensions": False,
-    "threads": max(2, os.cpu_count() - 1),
-})
+duckdb.connect(
+    path,
+    config={
+        "autoinstall_known_extensions": False,  # never download extensions
+        "autoload_known_extensions": False,
+        "allow_community_extensions": False,
+        "threads": max(2, os.cpu_count() - 1),
+    },
+)
 ```
 
 ### 4.2 Schema (core tables)
@@ -350,21 +353,28 @@ Target list = **every** ICPC-2 code in the bundled reference (components 1 and 7
 ## 7. Validation engine
 
 ```python
-class Status(IntEnum): PENDING=0; SKIPPED=1; VALID=2; WARNING=3; ERROR=4
+class Status(IntEnum):
+    PENDING = 0
+    SKIPPED = 1
+    VALID = 2
+    WARNING = 3
+    ERROR = 4
+
 
 @dataclass(frozen=True)
 class Issue:
-    check_id: str          # "V05"
-    severity: Status       # WARNING | ERROR
-    message: str           # PT-PT, user-facing
-    location: str | None   # "ficheiro X · linha 3" / "espaço 2024-07"
-    fix_hint: str | None   # PT-PT, actionable
+    check_id: str  # "V05"
+    severity: Status  # WARNING | ERROR
+    message: str  # PT-PT, user-facing
+    location: str | None  # "ficheiro X · linha 3" / "espaço 2024-07"
+    fix_hint: str | None  # PT-PT, actionable
+
 
 @dataclass
 class ValidationResult:
-    status: Status          # worst severity among issues (or VALID)
+    status: Status  # worst severity among issues (or VALID)
     issues: list[Issue]
-    info: dict              # data for the info card
+    info: dict  # data for the info card
 ```
 
 - File checks (V01–V12) and set checks (S01–S04) are pure functions `(RawSheet | list[RawSheet], ReportSpec, ProjectCtx) -> list[Issue]`, registered in a dict so specs can disable or override severities.
@@ -527,6 +537,7 @@ Installed first thing in `__main__` with `sys.addaudithook`, which cannot be rem
 
 ```python
 ALLOWED = {("mimufs.com", 443)}
+
 
 def _hook(event, args):
     if event == "socket.getaddrinfo":
