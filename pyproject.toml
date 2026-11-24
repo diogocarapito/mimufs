@@ -83,7 +83,7 @@ known-first-party = ["mimufs", "tests"]
 python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
-files = ["src/mimufs/core"]
+files = ["src/mimufs"]
 
 [[tool.mypy.overrides]]
 module = ["openpyxl.*", "xlrd.*", "tabula.*", "xlwt.*"]
