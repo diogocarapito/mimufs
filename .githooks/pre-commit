@@ -1,0 +1,7 @@
+#!/bin/sh
+# Blocks commits that would add data files (possible patient data) to the repo.
+# Enable once per clone:  git config core.hooksPath .githooks
+if command -v python3 >/dev/null 2>&1; then
+    exec python3 scripts/check_no_data_files.py
+fi
+exec python scripts/check_no_data_files.py

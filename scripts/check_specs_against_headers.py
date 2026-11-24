@@ -5,6 +5,7 @@ Exit code 1 if any spec column does not match the header cell at its position, o
 file has a titled header cell that the spec does not describe. Meant to become a pytest test
 (tests/core/test_specs_match_headers.py) in M0/M1.
 """
+
 import html
 import pathlib
 import re
@@ -28,7 +29,9 @@ def header_rows(rows):
     for i, row in enumerate(rows):
         if row and norm(row[0]) in ("Páginas:", "Filtro do relatório:"):
             meta_end = i
-    return next(i for i in range(meta_end + 1, len(rows)) if sum(1 for c in rows[i] if norm(c)) >= 2)
+    return next(
+        i for i in range(meta_end + 1, len(rows)) if sum(1 for c in rows[i] if norm(c)) >= 2
+    )
 
 
 def main() -> int:
@@ -51,7 +54,9 @@ def main() -> int:
         if extra:
             problems += 1
             print(f"UNDESCRIBED {spec['code']}: {extra}")
-        print(f"ok  {spec['code']:<15} header row {hi + 1}, {len(spec['header']['columns'])} columns")
+        print(
+            f"ok  {spec['code']:<15} header row {hi + 1}, {len(spec['header']['columns'])} columns"
+        )
     print("problems:", problems)
     return 1 if problems else 0
 
