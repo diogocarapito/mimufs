@@ -35,13 +35,20 @@ Python 3.12 · PySide6 (`pyside6-essentials`, Qt Widgets, Fusion style + QSS tok
 
 ```bash
 uv sync                                  # install deps (dev included)
+git config core.hooksPath .githooks      # once per clone: pre-commit hook that blocks data files
 uv run ruff check . && uv run ruff format --check .
-uv run mypy src/mimufs/core
-uv run pytest                            # unit + golden + offline e2e
+uv run mypy                              # strict, whole package (config in pyproject.toml)
+uv run pytest                            # unit + GUI smoke + offline e2e (tabula tests need Java 21)
 uv run python tests/fixtures/make_fixtures.py   # regenerate synthetic fixtures
+uv run python -m mimufs --selftest       # check an installation (synthetic data only)
+uv run python scripts/build_site.py      # after editing CHANGELOG.md: site/changelog.html + version.json
+uv run python packaging/icons/make_icons.py     # after editing packaging/icons/mimufs.svg
 uv run briefcase dev                     # run the app from source
+JAVA_HOME=<jdk-21> bash packaging/jre/build_jre.sh   # once per OS/arch, before building a bundle
 uv run briefcase create && uv run briefcase build && uv run briefcase run   # run the bundle
 ```
+
+After changing dependencies, refresh the bundle pins too: `uv export --no-dev --no-hashes --no-emit-project --no-header --format requirements-txt -o packaging/constraints.txt` (a test fails until you do).
 
 Keep these working; update this section if a command changes.
 

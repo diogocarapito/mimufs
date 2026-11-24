@@ -26,7 +26,7 @@
 | Packaging | **Briefcase** (BeeWare): MSI + portable ZIP (Windows), `.app` in `.dmg` (macOS), `.deb` + Flatpak (Linux) | One tool and one config (`pyproject.toml`) for all OSes; per-user MSI needs no admin; ships a standard Python runtime rather than a self-extracting bootloader (fewer antivirus false positives on SPMS PCs); already used successfully with PySide6 (`pyside6-essentials`, no universal2) |
 | CI/CD | **GitHub Actions** (3-OS matrix) | Free for public repos |
 | Website | **Plain HTML/CSS** in `site/`, GitHub Pages, Cloudflare DNS | Free, static |
-| Tooling | `uv` (env/lock), `ruff` (lint+format), `pytest`, `pytest-qt`, `pytest-socket`, `mypy` (core only) | Fast, reproducible |
+| Tooling | `uv` (env/lock), `ruff` (lint+format), `pytest`, `pytest-qt`, `pytest-socket`, `mypy --strict` (whole package) | Fast, reproducible |
 
 ### 1.1 Dependency licences (all GPL-3.0 compatible)
 
@@ -79,12 +79,16 @@ mimufs/
 ├── CHANGELOG.md                   # Keep a Changelog format, PT-PT entries
 ├── src/mimufs/
 │   ├── __init__.py                # __version__
-│   ├── __main__.py                # entry point: installs netguard, starts GUI
+│   ├── __main__.py                # entry point: installs netguard, starts GUI; --selftest, --version
+│   ├── selftest.py                # bundle self-test (specs, DuckDB, Excel, Java+tabula, netguard, Qt)
+│   ├── selftest_pdf.py            # tiny dependency-free PDF writer (selftest + fixtures)
+│   ├── logging_setup.py           # rotating app log + SNS redaction filter
 │   ├── netguard.py
 │   ├── update.py
 │   ├── settings.py                # platformdirs-based user settings (JSON)
 │   ├── core/
-│   │   ├── project.py             # Project create/open/save, DuckDB connection
+│   │   ├── db.py                  # the only DuckDB connect(): extension downloads off (§4.1)
+│   │   ├── project.py             # Project create/open/save
 │   │   ├── specs/
 │   │   │   ├── models.py          # pydantic models for report specs and rules
 │   │   │   ├── loader.py
@@ -94,7 +98,8 @@ mimufs/
 │   │   │   ├── excel.py           # format sniffing + openpyxl (patched) → RawSheet
 │   │   │   ├── openpyxl_compat.py # Diogo's openpyxl.worksheet._reader patch, isolated and version-pinned
 │   │   │   ├── mimuf_header.py    # metadata block + filter parser
-│   │   │   ├── sclinico_pdf.py    # tabula-py read_pdf → appointments table
+│   │   │   ├── sclinico_pdf.py    # tabula-py read_pdf → appointments table (+ CSV fallback)
+│   │   │   ├── tabula_runner.py   # tabula in subprocess mode, no console window, quiet logs
 │   │   │   └── java_runtime.py    # points tabula at the bundled JRE
 │   │   ├── validation/
 │   │   │   ├── checks.py          # V01–V12 file checks
@@ -113,8 +118,10 @@ mimufs/
 │   └── gui/
 │       ├── app.py
 │       ├── main_window.py
-│       ├── theme/ (style.qss, palette.py, fonts/Inter*.ttf)
-│       ├── icons/ (Tabler SVGs)
+│       ├── theme/palette.py       # token tables → QPalette + generated QSS
+│       ├── fonts/                 # Inter, JetBrains Mono (OFL) — TODO M1, system fonts until then
+│       ├── icons/ (Tabler SVGs, app.png) + iconset.py (recolours SVGs from theme tokens)
+│       ├── update_dialog.py
 │       ├── strings_pt.py          # all UI strings, keyed (future i18n)
 │       ├── steps/ (project.py, extraction.py, aggregate.py, quality.py, mapping.py, export.py)
 │       ├── widgets/ (drop_zone.py, status_badge.py, info_card.py, issue_list.py,
@@ -126,19 +133,20 @@ mimufs/
 │   ├── gui/ …                     # pytest-qt smoke tests
 │   └── e2e/test_pipeline_offline.py
 ├── packaging/
-│   ├── windows/ (icon.ico, installer_background.bmp)
-│   ├── macos/ (Info.plist, icon.icns, dmg settings)
-│   ├── jre/build_jre.sh           # jlink a minimal Temurin runtime per OS/arch
-│   └── linux/ (icon.png, Flatpak manifest overrides if needed)
+│   ├── icons/                     # mimufs.svg (source) → .icns, .ico, PNGs via make_icons.py
+│   ├── constraints.txt            # `uv export` of uv.lock: bundles get the locked versions
+│   └── jre/build_jre.sh           # jlink a minimal Temurin runtime per OS/arch
 ├── scripts/
-│   ├── build_site.py              # CHANGELOG.md → site/changelog.html, writes site/version.json
+│   ├── changelog.py               # CHANGELOG.md parser shared by the two scripts below
+│   ├── build_site.py              # CHANGELOG.md → site/changelog.html, writes site/version.json (--check)
+│   ├── check_bundle.py            # fails if a built bundle contains QtNetwork/WebEngine/TLS parts
+│   ├── check_no_data_files.py     # pre-commit + CI: no patient-data file types in git
 │   ├── check_specs_against_headers.py  # specs vs docs/reference/MIMUF_Header_examples.xlsx (already written)
 │   ├── update_indicadores.py      # TODO: maintainer-only indicator dictionary updater
 │   └── release_notes.py           # extracts a version's section from CHANGELOG.md
 ├── site/                          # GitHub Pages root
 │   ├── index.html  sobre.html  changelog.html  version.json
-│   ├── style.css  CNAME  (no JS frameworks, no external assets)
-│   └── assets/
+│   ├── style.css  favicon.svg  CNAME  (no JS frameworks, no external assets)
 └── .github/workflows/
     ├── ci.yml
     ├── release.yml
@@ -172,6 +180,8 @@ duckdb.connect(
     },
 )
 ```
+
+`core/db.py:connect()` is the only place that calls `duckdb.connect` (a test enforces it), and `unsafe_settings()` lets tests and `--selftest` prove the safe settings hold. **DuckDB 2.0**: a connection refuses new work while an `execute()` result is unfinished, so results are always fetched in full (`fetchall()`, or `con.sql(...).pl()` for Polars; the connection itself no longer has `.pl()`).
 
 ### 4.2 Schema (core tables)
 
@@ -260,7 +270,7 @@ Variations that the parser must handle (all seen in the real headers):
 
 ### 5.2 Parser algorithm (`readers/mimuf_header.py`)
 
-1. Read the first sheet with **openpyxl** (`load_workbook(path, read_only=True, data_only=True)` after `openpyxl_compat.apply()`) into a list of rows (`ws.iter_rows(values_only=True)`), keeping cells as strings/numbers. Cells are never coerced at this stage: typing happens in staging. `html.unescape` every metadata cell.
+1. Read the first sheet with **openpyxl** (`load_workbook(fh, read_only=True, data_only=True)` after `openpyxl_compat.apply()`; the file is passed as an open **binary handle** because openpyxl refuses paths ending in `.xls`) into a list of rows (`ws.iter_rows(values_only=True)`), keeping cells as strings/numbers. Cells are never coerced at this stage: typing happens in staging. `html.unescape` every metadata cell.
 2. **Title**: regex `^(P\d{2}(?:\.\d{2}){0,2}\.[LR]\d{2})\.\s*(.+)$` → `code`, `title`. If it fails, match the title text against the specs' `title`, then confirm with the header signature (column names at their positions).
 3. **Filter**: the first non-blank row after `Filtro do relatório:`, parsed by a small **tokenizer** (not a regex split):
    - split on top-level ` E ` between clauses, tracking parenthesis depth; a clause may or may not be wrapped in `(…)`;
@@ -550,6 +560,7 @@ def _hook(event, args):
 ```
 
 - `_updater_active` is a `contextvars.ContextVar` set only inside `update.check()`.
+- As built (M0), the hook also vetoes `socket.sendto`, `socket.sendmsg` and `urllib.Request`; loopback and `AF_UNIX` traffic is allowed (it never leaves the machine, and Windows builds `socket.socketpair()` on localhost). Blocked attempts are counted and shown in the title-bar badge tooltip.
 - Any library that tries to phone home fails loudly in development and silently (logged) in release.
 - This only covers Python-level sockets, which is why no Qt networking is used and DuckDB extension downloads are disabled. The **Java subprocess** used by tabula is outside Python, so the hook can't see it. tabula-java makes no network calls, and the OS-level offline test below covers it.
 
@@ -613,7 +624,7 @@ Chosen direction: **B v2, console style**. The window is fixed, and the panes in
 - `PhaseNav`: a `QTreeView` over a `PhaseModel`. Top level = phases, children = sub-steps; section headers are rendered as non-selectable rows. Expand and collapse are free, including for locked phases (preview only). Only sub-steps of unlocked phases can be selected.
 - Each phase defines an ordered list of sub-steps, which drives the footer *Anterior / Seguinte* buttons and the "Sub-passo n de N" counter. The last sub-step of each phase is a **gate** ("Rever e continuar") that unlocks the next phase.
 - Splitters (`QSplitter`) between nav/content, content/validation and content/log, with sizes persisted in settings.
-- Style: **Fusion** style plus QSS generated from a **token palette with two themes** (`dark`, `light`; same token names as the mockup: `bg, chrome, panel, panel2, border, line, text, strong, muted, accent, ok, warn, err, pend`). A theme toggle in the title bar is persisted in settings, with "seguir o sistema" as the default. Inter and JetBrains Mono are bundled; icons are Tabler (already in the repo).
+- Style: **Fusion** style plus QSS generated from a **token palette with two themes** (`dark`, `light`; same token names as the mockup: `bg, chrome, panel, panel2, border, line, text, strong, muted, accent, ok, warn, err, pend`). A theme toggle in the title bar is persisted in settings, with "seguir o sistema" as the default. Inter and JetBrains Mono are to be bundled in `gui/fonts/` (TODO M1; until then the closest system fonts are picked, never downloaded); icons are Tabler, recoloured from the theme tokens.
 - Status is never shown by colour alone: the badges combine icon, colour and label.
 
 ### 14.2 Key widgets
@@ -654,6 +665,8 @@ All UI text lives in `gui/strings_pt.py` (keyed constants). Report instructions 
 | Offline e2e | pytest-socket + netguard | Full pipeline with sockets blocked |
 | Performance | pytest-benchmark (nightly) | 30k × 800 build time and memory |
 
+**Fixture generator as built (M0).** Each MIM@UF fixture reuses the real metadata block and header of its report from `MIMUF_Header_examples.xlsx`, substitutes year, period (`Mês`, `Trimestre = YYYY-Tn`, month lists), unit, doctor and slot value, and appends seeded rows from **one shared synthetic population** (SNS numbers `9xxxxxxxx`, names `Utente 0001`, doctors `MEDICO SINTETICO …`), so the files join like a real project. It writes one valid file per slot of all 17 reports (44 files), variants (`.xlsx`, legacy BIFF via `xlwt` (dev dependency), HTML renamed `.xls`, damaged title, `Total` footer), a SClínico-style PDF and the CSV fallback, plus `manifest.json`. `generate()` runs as a session pytest fixture. Slot values not yet confirmed by Diogo (`Exame MCDT`, `Tipo Dado`) are placeholders shaped like the real ones. The broken variants for the V/S checks are added in M1.
+
 ---
 
 ## 16. Packaging and distribution
@@ -677,27 +690,30 @@ Link pattern: `https://github.com/diogocarapito/mimufs/releases/latest/download/
 
 ### 16.2 Briefcase notes
 
-- Configuration lives in `[tool.briefcase]` in `pyproject.toml`: app name `mimufs`, `formal_name = "mimufs"`, bundle id `com.mimufs`, `sources = ["src/mimufs"]`, `requires` = the runtime dependencies (with **`pyside6-essentials`**, not `pyside6`), icons per platform.
+- Configuration lives in `[tool.briefcase]` in `pyproject.toml`: app name `mimufs`, `formal_name = "mimufs"`, bundle id `com.mimufs` (app id `com.mimufs.mimufs`), `sources = ["src/mimufs"]`, `icon = "packaging/icons/mimufs"`. Briefcase ≥ 0.4 reads version, description, licence and **`[project].dependencies`** (with **`pyside6-essentials`**, not `pyside6`) from the PEP 621 table, so there is no separate `requires` list. Briefcase installs with pip, not uv, so `requirement_installer_args` passes `--constraint packaging/constraints.txt` (`uv export` of `uv.lock`; a test keeps them equal) and bundles get exactly the locked versions.
+- **Icons**: `packaging/icons/mimufs.svg` (the original bar-chart logo, redrawn as vectors with a white panel) → `make_icons.py` renders `.icns`, `.ico`, the Linux PNG sizes and `gui/icons/app.png` with Qt; no platform tools needed.
 - Data files (`core/specs` YAML, `core/reference`, theme, fonts, icons) live inside `src/mimufs/` so Briefcase copies them with the sources. They are read through `importlib.resources`, never through paths relative to the working directory.
-- **Trimming**: Briefcase `cleanup_paths` removes what mimufs never uses from the bundle: `QtNetwork`, `QtQml`, `QtQuick*`, `Qt3D*`, `QtMultimedia*`, `QtWebEngine*` (if present), their plugins, translations not needed, `tkinter`, tests folders of dependencies. Kept: `platforms`, `styles`, `imageformats/qsvg`, `iconengines/qsvgicon`. A CI check fails the build if any `QtNetwork`/`QtWebEngine` library is still in the bundle (§12.3).
-- **macOS**: `universal_build = false`; one build per architecture (arm64, x86_64). Ad-hoc signing only (`--adhoc-sign`) until there is an Apple Developer account.
+- **Trimming** (as built: 65 glob patterns, tested on miniature bundles laid out like each OS in `tests/test_packaging.py`; pyarrow's S3/GCS/Azure/HDFS filesystem modules and CPython's `test`/`tkinter`/`idlelib`/`ensurepip` go too): Briefcase `cleanup_paths` removes what mimufs never uses from the bundle: `QtNetwork`, `QtQml`, `QtQuick*`, `Qt3D*`, `QtMultimedia*`, `QtWebEngine*` (if present), their plugins, translations not needed, `tkinter`, tests folders of dependencies. Kept: `platforms`, `styles`, `imageformats/qsvg`, `iconengines/qsvgicon`. A CI check fails the build if any `QtNetwork`/`QtWebEngine` library is still in the bundle (§12.3).
+- **macOS**: `universal_build = false`; one build per architecture (arm64, x86_64). `min_os_version = "12.0"` (PRD §9). That pins **PySide6 to 6.9.x**, the last release with macOS 12 wheels (6.10–6.11 need macOS 13, 6.12 needs 14); moving Qt forward means raising the macOS minimum in the PRD first. Ad-hoc signing only (`--adhoc-sign`) until there is an Apple Developer account. `std-nslog` routes stdout to the unified log; `--selftest-out FILE` gives CI a report regardless.
+- **Linux**: `.deb` runtime dependencies are the Qt 6 X11/EGL libraries (`system_runtime_requires`); Flatpak uses the KDE runtime (`org.kde.Platform` 6.9; check it is still on Flathub before each release).
 - **Windows**: ad-hoc (no) signing; `version_triple` derived from the SemVer version; `system_installer = false`.
-- Size budget: ≤ 250 MB compressed (PySide6-essentials + Polars + DuckDB + pyarrow + the JRE are the bulk). Measure in M0.
+- Size budget: ≤ 250 MB compressed. **Measured in M0 (macOS arm64, PySide6 6.9.3)**: 534 MB unpacked, **176.2 MB DMG**. The bulk: Polars runtime 149 MB, pyarrow 90 MB, Python framework ~50 MB, PySide6 54 MB (~350 MB before trimming), DuckDB 49 MB, the JRE 43 MB, pandas 27 MB (pulled in by tabula-py).
 - **Java runtime**: `packaging/jre/build_jre.sh` uses `jlink` on Eclipse Temurin (LTS, e.g. 21) with only the modules tabula-java needs (start from `java.base,java.desktop,java.xml,java.logging`; confirm with `jdeps` on the tabula jar), plus `--strip-debug --no-header-files --no-man-pages --compress`. Expected size is about 40–50 MB per platform. It is built **per OS and architecture** in the CI matrix and written to `src/mimufs/_runtime/jre/` (git-ignored) **before** `briefcase create`, so Briefcase bundles it like any other source file. `java_runtime.configure()` finds it with `importlib.resources`. On macOS, Briefcase's ad-hoc signing covers the JRE's binaries too; check in M0 that Gatekeeper accepts them after "Abrir mesmo assim".
 - **Development**: `briefcase dev` runs the app from source; `briefcase run` runs the built bundle locally. Both are used in the M0 smoke test.
 
 ### 16.3 CI workflows
 
-- **`ci.yml`** (push/PR): ruff → mypy (core) → pytest (unit, golden, offline e2e) on `ubuntu-latest`, `windows-latest`, `macos-latest`; pytest-qt smoke on Linux with Xvfb.
+- **`ci.yml`** (push/PR): ruff → `mypy --strict` (whole package) → data-file check → `build_site.py --check` → pytest (unit, golden, GUI smoke with `QT_QPA_PLATFORM=offscreen`, offline e2e) on Ubuntu 24.04, Windows and macOS with Temurin 21; plus the offline e2e inside `unshare --net` on Linux (§12.3).
 - **`release.yml`** (tag `v*`):
-  1. Build matrix (Windows x64, macOS arm64, macOS x86_64, Linux x86_64): build the jlinked JRE → `briefcase create` → `briefcase build` → smoke-launch the bundle (`--selftest` flag: loads specs, opens a temp project, reads a fixture PDF with tabula, exits 0) → `briefcase package` (zip + msi / dmg / deb + flatpak) → rename to stable artefact names.
-  2. Create a GitHub Release with notes extracted from `CHANGELOG.md`, and upload the artefacts with stable names.
-  3. Run `scripts/build_site.py` → regenerate `site/changelog.html` and `site/version.json` → commit to `main` → triggers `pages.yml`.
-- **`pages.yml`** (push to `site/**`): `actions/upload-pages-artifact` (path `site/`) → `actions/deploy-pages`.
+  0. Check: the tag is on `main`, equals `[project].version`, has a dated `CHANGELOG.md` section, and `site/` is already generated for it (`build_site.py --check`). **Release flow**: bump the version, date the CHANGELOG section, run `scripts/build_site.py`, merge to `main`, tag.
+  1. Build matrix (Windows x64, macOS arm64, macOS x86_64 on `macos-15-intel`, Linux x86_64): build the jlinked JRE → `briefcase create` → `briefcase build` → `scripts/check_bundle.py` (no QtNetwork/WebEngine/TLS) → run the built app with `--selftest` (specs, DuckDB safe config, Excel parser, bundled Java + tabula, netguard, Qt window; Linux: from the installed `.deb`, and the Flatpak via `flatpak run`) → `briefcase package` (zip + msi / dmg / deb + flatpak) → rename to stable artefact names.
+  2. Create a GitHub Release with notes from `scripts/release_notes.py`, and upload the artefacts with stable names.
+  3. Deploy the site by calling `pages.yml`. No bot commits to `main`: the tag commit already holds the generated site.
+- **`pages.yml`** (called by `release.yml`, or run by hand for text-only changes): `actions/upload-pages-artifact` (path `site/`) → `actions/deploy-pages`. It does **not** deploy on every push to `main`, so `version.json` never announces a version whose downloads don't exist yet.
 
 ### 16.4 Versioning
 
-SemVer. `pyproject.toml` is the single source. `__version__` is read via `importlib.metadata.version("mimufs")`, which works in the bundle because Briefcase installs the app's own metadata (`dist-info`); check in M0, with `src/mimufs/__about__.py` as the fallback single source. `CHANGELOG.md` follows Keep a Changelog with PT-PT entries; the first bullet lines become `notes_pt` in `version.json`.
+SemVer. `pyproject.toml` is the single source. `__version__` is read via `importlib.metadata.version("mimufs")`, which works in the bundle because Briefcase installs the app's own metadata (`dist-info`) — **checked in M0** (the macOS bundle reports 0.0.1), so no `__about__.py` fallback is needed. M0 test builds are `0.0.x`; `0.1.0` is the first public release. `CHANGELOG.md` follows Keep a Changelog with PT-PT entries; the first bullet lines become `notes_pt` in `version.json`.
 
 ---
 
@@ -751,6 +767,9 @@ Also settled: the duplicate ICPC codes in set 2 were a mistake and have been rem
 - [ ] **Indicator dictionary updater** (`scripts/update_indicadores.py`, maintainer-only): port the scraping/PDF extraction from `github.com/diogocarapito/datasets_indicadores` (`scripts/extracao_indicadores_intervalos.py`, `sdm_crawler_scrapper.py`) to regenerate `indicadores_intervalos.csv`, print a diff, bump the version in `dictionaries.json`. Source file: https://github.com/diogocarapito/datasets_indicadores/blob/main/datasets/indicadores_intervalos_esperados_aceitaveis.csv
 - [ ] Decide on the 20 ICPC codes not in the MIM@UF sets (PRD §12.2 item 3) and the doctor-page question (item 1).
 - [ ] Confirm the real format of MIM@UF exports: openpyxl only reads OOXML, so if it opens them, they are `.xlsx` files with an `.xls` name. The sniffing in §5.0 handles both cases either way.
+- [ ] Bundle Inter and JetBrains Mono (OFL) in `gui/fonts/` (M1); `gui/app.py` already loads any `.ttf`/`.otf` placed there.
+- [ ] `author_email` for `[tool.briefcase]` (the `.deb` Maintainer field); left unset on purpose until Diogo picks an address.
+- [ ] PySide6 is pinned to 6.9.x to keep macOS 12 (PRD §9). Revisit when macOS 12 support can be dropped (6.12 needs macOS 14).
 
 **TODO — Claude Code implementation step** (Diogo provides these when the implementation starts; until then the modules are written against the interfaces in §5.0.1 and §10.1, with tests marked `xfail`):
 - [ ] **openpyxl patch**: the `openpyxl.worksheet._reader` code Diogo used to read MIM@UF exports, and the openpyxl version it was written for → `readers/openpyxl_compat.py`, version pinned in `pyproject.toml`.

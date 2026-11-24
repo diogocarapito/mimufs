@@ -37,3 +37,5 @@ Thumbs.db
 
 # Briefcase local state
 .briefcase/
+# Written by `briefcase dev` (app metadata for importlib.metadata in dev mode)
+src/*.dist-info/

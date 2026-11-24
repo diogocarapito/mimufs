@@ -27,9 +27,10 @@ Requires [uv](https://docs.astral.sh/uv/) (it installs Python 3.12 for you). The
 uv sync                                         # install deps (dev included)
 git config core.hooksPath .githooks             # enable the "no data files" pre-commit hook
 uv run ruff check . && uv run ruff format --check .
-uv run mypy src/mimufs/core
-uv run pytest                                   # unit + golden + offline e2e
+uv run mypy                                     # strict, whole package
+uv run pytest                                   # unit + GUI smoke + offline e2e
 uv run python tests/fixtures/make_fixtures.py   # regenerate synthetic fixtures
+uv run python -m mimufs --selftest              # check an installation (synthetic data only)
 uv run briefcase dev                            # run the app from source
 ```
 
