@@ -34,3 +34,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Briefcase local state
+.briefcase/
