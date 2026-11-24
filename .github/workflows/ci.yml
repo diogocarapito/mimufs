@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.13.9"
+  QT_QPA_PLATFORM: offscreen
+  PYTHONUTF8: "1"
+
+jobs:
+  checks:
+    name: Lint, types, data files, site
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy
+      - name: No data files in git (CLAUDE.md rule 2)
+        run: uv run python scripts/check_no_data_files.py
+      - name: Site is generated from CHANGELOG.md
+        run: uv run python scripts/build_site.py --check
+
+  test:
+    name: Tests (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Qt runtime libraries (Linux)
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3
+          libxcb-cursor0 libglib2.0-0t64
+      - run: uv sync --locked
+      - run: uv run pytest
+
+  offline:
+    name: Offline e2e (Linux, no network namespace)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Qt runtime libraries
+        run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libegl1 libgl1 libxkbcommon0 libfontconfig1 libdbus-1-3 libglib2.0-0t64
+      - run: uv sync --locked
+      - name: The namespace really has no network
+        run: |
+          if sudo unshare --net curl -sS --max-time 5 https://example.com -o /dev/null; then
+            echo "network reachable inside the namespace" >&2; exit 1
+          fi
+      - name: e2e with every process cut off from the network (Java included)
+        # unshare needs root; setpriv drops back to the runner user inside the namespace.
+        run: >-
+          sudo unshare --net
+          setpriv --reuid="$(id -u)" --regid="$(id -g)" --init-groups
+          env "PATH=$PATH" "HOME=$HOME" "JAVA_HOME=$JAVA_HOME"
+          QT_QPA_PLATFORM=offscreen PYTHONUTF8=1
+          .venv/bin/python -m pytest tests/e2e -p no:cacheprovider -v

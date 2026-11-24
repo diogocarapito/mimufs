@@ -1,0 +1,187 @@
+name: Release
+
+# Push a tag vX.Y.Z on main (after updating pyproject version, CHANGELOG.md and running
+# scripts/build_site.py) → bundles for 4 platforms, each self-tested, a GitHub Release with
+# stable artefact names, then the site deploy (version.json announces the new version only
+# once its downloads exist).
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.9"
+  PYTHONUTF8: "1"
+
+jobs:
+  check:
+    name: Check the tag
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+      - name: Tag is on main
+        run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      - name: Tag = pyproject version, with a dated CHANGELOG section
+        run: >-
+          uv run --no-project --python 3.12 python scripts/release_notes.py
+          "$GITHUB_REF_NAME" --check-pyproject > release-notes.md
+      - name: Site (version.json, changelog) already generated for this version
+        run: uv run --no-project --python 3.12 python scripts/build_site.py --check
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+
+  build:
+    name: Bundle (${{ matrix.label }})
+    needs: check
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows-latest, target: windows, label: windows-x64 }
+          - { os: macos-latest, target: macOS, label: macos-arm64 }
+          - { os: macos-15-intel, target: macOS, label: macos-x64 }
+          - { os: ubuntu-24.04, target: linux, label: linux-x86_64 }
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Build tools and Qt runtime libraries (Linux)
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          python3-dev python3-venv build-essential dpkg-dev flatpak flatpak-builder
+          libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3
+          libxcb-cursor0 libglib2.0-0t64
+      - run: uv sync --locked
+      - name: Minimal Java runtime for tabula (jlink)
+        run: bash packaging/jre/build_jre.sh
+
+      - name: Create and build the app
+        run: |
+          target=("${{ matrix.target }}")
+          if [ "${target[0]}" = linux ]; then target=(linux system); fi
+          uv run briefcase create "${target[@]}" --no-input
+          uv run briefcase build "${target[@]}" --no-input
+      - name: No QtNetwork / WebEngine / TLS in the bundle
+        run: uv run python scripts/check_bundle.py build
+
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          build/mimufs/macos/app/mimufs.app/Contents/MacOS/mimufs --selftest --selftest-out selftest.txt
+          uv run briefcase package macOS --adhoc-sign --no-input
+      - name: Self-test and package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath "build\mimufs\windows\app\src\mimufs.exe" `
+            -ArgumentList "--selftest", "--selftest-out", "$PWD\selftest.txt" -Wait -PassThru
+          Get-Content selftest.txt
+          if ($p.ExitCode -ne 0) { exit 1 }
+          uv run briefcase package windows -p zip --adhoc-sign --no-input
+          uv run briefcase package windows -p msi --adhoc-sign --no-input
+      - name: Package, install and self-test (Linux .deb)
+        if: runner.os == 'Linux'
+        run: |
+          uv run briefcase package linux system --no-input
+          sudo apt-get install -y ./dist/*.deb
+          env -u DISPLAY mimufs --selftest --selftest-out selftest.txt
+      - name: Self-test result
+        run: |
+          cat selftest.txt
+          [ "$(tail -n 1 selftest.txt)" = "selftest passed" ]
+      - name: Flatpak (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          uv run briefcase create linux flatpak --no-input
+          uv run briefcase build linux flatpak --no-input
+          uv run briefcase package linux flatpak --no-input
+          flatpak install --user -y --noninteractive dist/*.flatpak
+          flatpak run com.mimufs.mimufs --selftest | tee flatpak-selftest.txt
+          grep -qx "selftest passed" flatpak-selftest.txt
+
+      - name: Stable artefact names
+        run: |
+          mkdir -p out
+          case "${{ matrix.label }}" in
+            windows-x64)
+              mv dist/*.zip out/mimufs-windows-x64-portable.zip
+              mv dist/*.msi out/mimufs-windows-x64.msi ;;
+            macos-*)
+              mv dist/*.dmg "out/mimufs-${{ matrix.label }}.dmg" ;;
+            linux-x86_64)
+              mv dist/*.deb out/mimufs-linux-x86_64.deb
+              mv dist/*.flatpak out/mimufs-linux-x86_64.flatpak ;;
+          esac
+          {
+            echo "### ${{ matrix.label }}"
+            echo '```'
+            cat selftest.txt
+            ls -l out
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.label }}
+          path: out/*
+          if-no-files-found: error
+          compression-level: 0
+
+  publish:
+    name: GitHub Release
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: bundle-*
+          path: out
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-notes
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME" out/*
+          --repo "$GITHUB_REPOSITORY" --verify-tag
+          --title "mimufs ${GITHUB_REF_NAME#v}" --notes-file release-notes.md
+
+  site:
+    name: Deploy mimufs.com
+    needs: publish
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml
+    with:
+      ref: ${{ github.ref }}

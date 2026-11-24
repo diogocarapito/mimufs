@@ -139,3 +139,18 @@ def test_constraints_match_the_lock_file() -> None:
     committed = (ROOT / "packaging" / "constraints.txt").read_text(encoding="utf-8")
     assert committed.splitlines() == exported.splitlines()
     assert APP["requirement_installer_args"] == ["--constraint", "./packaging/constraints.txt"]
+
+
+def test_bundle_scanner_flags_network_parts(tmp_path: Path) -> None:
+    import sys
+
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import check_bundle
+
+    for rel in [*REMOVED[:6], *KEPT]:
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"")
+    assert len(check_bundle.offending(tmp_path)) >= 6
+    _apply_cleanup(tmp_path)
+    assert check_bundle.offending(tmp_path) == []

@@ -1,0 +1,12 @@
+# Same bytes on every OS (Windows CI runners default to CRLF checkouts).
+* text=auto eol=lf
+# Reference data is checksummed (dictionaries.json): keep its bytes exactly as supplied.
+src/mimufs/core/reference/** -text
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary
+*.icns binary
+*.xlsx binary
+*.xls binary
+*.pdf binary

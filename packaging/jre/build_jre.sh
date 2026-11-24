@@ -13,6 +13,9 @@ if [[ -z "${JAVA_HOME:-}" ]]; then
     echo "JAVA_HOME must point to a JDK 21 (e.g. Eclipse Temurin 21)" >&2
     exit 1
 fi
+if command -v cygpath >/dev/null 2>&1; then  # Git Bash on Windows
+    JAVA_HOME="$(cygpath -u "$JAVA_HOME")"
+fi
 JLINK="$JAVA_HOME/bin/jlink"
 JDEPS="$JAVA_HOME/bin/jdeps"
 
