@@ -19,7 +19,15 @@ from typing import Any
 
 from mimufs.core.readers import java_runtime
 
-JAVA_OPTIONS = ["-Djava.awt.headless=true", "-Dfile.encoding=UTF8", "-Xmx1g"]
+JAVA_OPTIONS = [
+    "-Djava.awt.headless=true",
+    "-Dfile.encoding=UTF8",
+    # Since Java 18, System.out uses stdout.encoding (the console code page, cp1252 on
+    # Windows), not file.encoding; tabula-py decodes the CSV it prints as UTF-8.
+    "-Dstdout.encoding=UTF-8",
+    "-Dstderr.encoding=UTF-8",
+    "-Xmx1g",
+]
 
 
 class TabulaError(RuntimeError):

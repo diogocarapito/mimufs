@@ -135,3 +135,19 @@ def test_sclinico_pdf_reader(tmp_path: Path) -> None:
     pdf.write_bytes(make_table_pdf(HEADER, ROWS))
     frame = sclinico_pdf.read_appointments(pdf)
     assert frame.height == len(ROWS)
+
+
+@pytest.mark.requires_java
+@needs_java
+def test_accents_survive_a_non_utf8_console(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Windows' Java prints to stdout in the console code page (cp1252) unless told otherwise.
+
+    JAVA_TOOL_OPTIONS reproduces that default on any OS; tabula_runner's own options win.
+    """
+    monkeypatch.setenv("JAVA_TOOL_OPTIONS", "-Dstdout.encoding=windows-1252")
+    pdf = tmp_path / "consultas.pdf"
+    pdf.write_bytes(make_table_pdf(HEADER, ROWS, rows_per_page=40))
+    (table,) = tabula_runner.read_pdf_tables(pdf, lattice=True, pandas_options={"dtype": str})
+    assert table.iloc[0]["Profissional"] == "Médico Teste"
