@@ -76,6 +76,9 @@ select = ["E", "F", "W", "I", "UP", "B", "SIM", "RUF", "C4", "PIE", "PT"]
 # PT-PT text legitimately uses en dashes, typographic quotes, etc.
 ignore = ["RUF001", "RUF002", "RUF003"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["mimufs", "tests"]
+
 [tool.mypy]
 python_version = "3.12"
 strict = true

@@ -42,8 +42,7 @@ Notes: Extracted twice (Jan + Dec). Untitled column 2 = patient name → `Nome`.
 ## P01.01.L03
 
 ```
-1.01.L03. Inscritos &gt; Dados dos Utentes
-⟂
+P01.01.L03. Inscritos &gt; Dados dos Utentes
 Filtro do relatório:
 (Mês = 2000-12) E ({Unidade Funcional / Polo Hospitalar} = USF Exemplo)
 ⟂

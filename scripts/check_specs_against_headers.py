@@ -1,62 +1,51 @@
 """Check every report spec against the real MIM@UF headers.
 
 Usage:  uv run python scripts/check_specs_against_headers.py
-Exit code 1 if any spec column does not match the header cell at its position, or if the
-file has a titled header cell that the spec does not describe. Meant to become a pytest test
-(tests/core/test_specs_match_headers.py) in M0/M1.
+Exit code 1 if any spec column does not match the header cell at its position, or if the file
+has a titled header cell that the spec does not describe.
+
+A thin CLI over the real parser (mimufs.core.readers.mimuf_header). The same check runs in
+pytest: tests/core/test_mimuf_header.py::test_real_header_parses_and_binds.
 """
 
-import html
-import pathlib
-import re
+from __future__ import annotations
+
 import sys
+import tempfile
+from pathlib import Path
 
-import openpyxl
-import yaml
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
-XLSX = ROOT / "docs/reference/MIMUF_Header_examples.xlsx"
-SPECS = ROOT / "src/mimufs/core/specs/reports"
-
-
-def norm(value) -> str:
-    return re.sub(r"\s+", " ", html.unescape(str(value or "")).strip())
-
-
-def header_rows(rows):
-    """First row with >= 2 non-empty cells after the last metadata marker."""
-    meta_end = 0
-    for i, row in enumerate(rows):
-        if row and norm(row[0]) in ("Páginas:", "Filtro do relatório:"):
-            meta_end = i
-    return next(
-        i for i in range(meta_end + 1, len(rows)) if sum(1 for c in rows[i] if norm(c)) >= 2
-    )
+from mimufs.core.readers.mimuf_header import bind_columns, read_mimuf_file  # noqa: E402
+from mimufs.core.specs import mimuf_specs  # noqa: E402
+from tests.fixtures.make_fixtures import split_header_examples  # noqa: E402
 
 
 def main() -> int:
-    wb = openpyxl.load_workbook(XLSX, data_only=True)
     problems = 0
-    for path in sorted(SPECS.glob("P*.yaml")):
-        spec = yaml.safe_load(path.read_text(encoding="utf-8"))
-        rows = [list(r) for r in wb[spec["code"]].iter_rows(values_only=True)]
-        hi = header_rows(rows)
-        row1, row2 = rows[hi], (rows[hi + 1] if spec["header"]["rows"] == 2 else None)
-        described = set()
-        for c in spec["header"]["columns"]:
-            described.add(c["at"])
-            got = norm((row2 if c.get("row2") else row1)[c["at"]]) if c["at"] < len(row1) else ""
-            want = c["header"]
-            if not (got == want or (c.get("match") == "startswith" and got.startswith(want))):
+    specs = mimuf_specs()
+    with tempfile.TemporaryDirectory() as tmp:
+        files = split_header_examples(Path(tmp))
+        for code, spec in specs.items():
+            if code not in files:
                 problems += 1
-                print(f"MISMATCH {spec['code']} col {c['at']}: file={got!r} spec={want!r}")
-        extra = [(i, norm(v)) for i, v in enumerate(row1) if norm(v) and i not in described]
-        if extra:
-            problems += 1
-            print(f"UNDESCRIBED {spec['code']}: {extra}")
-        print(
-            f"ok  {spec['code']:<15} header row {hi + 1}, {len(spec['header']['columns'])} columns"
-        )
+                print(f"MISSING  {code}: no sheet in the header workbook")
+                continue
+            raw = read_mimuf_file(files[code], specs)
+            if raw.code != code:
+                problems += 1
+                print(f"CODE     {code}: parser identified {raw.code!r}")
+                continue
+            bound = bind_columns(raw, spec)
+            for m in bound.mismatches:
+                problems += 1
+                print(f"MISMATCH {code} col {m.at}: file={m.found!r} spec={m.expected!r}")
+            if bound.extra_columns:
+                problems += 1
+                print(f"UNDESCRIBED {code}: {list(bound.extra_columns)}")
+            n = len(spec.header.columns)
+            print(f"ok  {code:<15} via {raw.code_source:<16} {n} columns")
     print("problems:", problems)
     return 1 if problems else 0
 
