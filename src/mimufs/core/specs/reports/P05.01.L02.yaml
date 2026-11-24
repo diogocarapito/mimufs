@@ -1,0 +1,71 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P05.01.L02
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Risco de Diabetes > Nível de Risco por Utente
+group: Problemas
+level: patient
+required: false
+purpose: Nível de risco de diabetes por utente.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = todos os meses de {ano} (uma só extração); Unidade Funcional = {unidade}; Tipo Risco = diabetes.
+- Exporte para Excel.
+slots:
+  kind: month_coverage
+  months:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  note: 'Uma extração cujo filtro lista vários meses. O exemplo lista jan–nov: avisar (🟠) se faltar algum mês.'
+no_pages: true
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: Mês
+    name: Mês
+    type: str
+    role: period
+  - at: 1
+    header: Unidade Funcional / Polo Hospitalar
+    name: Unidade Funcional / Polo Hospitalar
+    type: str
+    role: unit
+  - at: 2
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+  - at: 3
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 4
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 5
+    header: Tipo Risco
+    name: Tipo Risco
+    type: cat
+  - at: 6
+    header: Risco
+    name: Risco
+    type: cat
+doctor_pages: []
+pages_expect: {}
+filter_expect: {}

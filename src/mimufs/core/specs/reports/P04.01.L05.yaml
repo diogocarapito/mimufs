@@ -1,0 +1,81 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P04.01.L05
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Novos Problemas > Utente
+group: Problemas
+level: patient_event
+required: true
+purpose: Problemas novos por mês. Uma extração por mês, juntas no fim.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = um mês de {ano}; Unidade Funcional = {unidade}; Nº Novos Utentes > 0; Médico de Registo = Total.
+- Exporte para Excel e repita para os 12 meses.
+slots:
+  kind: months
+  months:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+pages_expect:
+  Flag Médico Família: Total
+  Médico Familia: Total
+doctor_pages:
+- Médico de Registo
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: ICPC
+    name: ICPC
+    type: str
+    role: icpc
+  - at: 1
+    header: ''
+    name: ICPC_Descricao
+    type: str
+  - at: 2
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 3
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 4
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 5
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 6
+    header: Idade
+    name: Idade
+    type: int
+  - at: 7
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 8
+    header: Nº Novos Ut
+    name: Nº Novos Ut
+    type: int
+filter_expect: {}
+no_pages: false

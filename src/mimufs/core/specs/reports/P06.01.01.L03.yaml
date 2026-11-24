@@ -1,0 +1,99 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P06.01.01.L03
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Listagem de Medicamentos Prescritos por Utente - Marca e DCI
+group: Medicação & MCDT
+level: patient_event
+required: true
+purpose: Prescrições por utente, com médico prescritor e grupo farmacoterapêutico N3. Classificadas também pelo dicionário de medicamentos.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Período = um trimestre (Trimestre = {ano}-Tn) ou um mês; Unidade Funcional = {unidade}; restantes páginas = Total.
+- Exporte para Excel e repita até cobrir os 12 meses.
+slots:
+  kind: month_coverage
+  months:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  display: quarters
+  note: Aceita ficheiros por trimestre (Trimestre = YYYY-Tn) ou por mês (Mês = YYYY-MM). O ano tem de ficar coberto sem sobreposições.
+pages_expect:
+  Flag Médico Família: Total
+  Médico Familia: Total
+  Grupo Farmoterapeutico N2/CNPEM: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: Medicamento/CNPEM
+    name: Medicamento/CNPEM
+    type: str
+    role: medication
+  - at: 1
+    header: Embalagem/CNPEM
+    name: Embalagem/CNPEM
+    type: str
+  - at: 2
+    header: Grupo Farmoterapeutico N3/CNPEM
+    name: Grupo Farmoterapeutico N3/CNPEM
+    type: cat
+  - at: 3
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 4
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 5
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 6
+    header: Idade
+    name: Idade
+    type: int
+  - at: 7
+    header: Médico
+    name: Médico
+    type: str
+    role: prescriber
+  - at: 8
+    header: ''
+    name: Médico_2
+    type: str
+  - at: 9
+    header: Dia Prescrição
+    name: Dia Prescrição
+    type: date
+  - at: 10
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 11
+    header: Nº Receitas Prescritas
+    name: Nº Receitas Prescritas
+    type: int
+  - at: 12
+    header: Nº Embalagens Prescritas
+    name: Nº Embalagens Prescritas
+    type: int
+doctor_pages: []
+filter_expect: {}
+no_pages: false

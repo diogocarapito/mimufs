@@ -1,0 +1,54 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P07.01.01.L01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Listagem de MCDTs Prescritos > Utente
+group: Medicação & MCDT
+level: patient_event
+required: true
+purpose: Análises clínicas prescritas por utente.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Ano = {ano}; Area MCDT = ANÁLISES CLÍNICAS; Médico = (ver nota).
+- Exporte para Excel.
+slots:
+  kind: year
+filter_expect:
+  Area MCDT: ANÁLISES CLÍNICAS
+doctor_pages:
+- Médico
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: Exame MCDT
+    name: Exame MCDT
+    type: str
+    role: exam
+  - at: 1
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 2
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 3
+    header: Dia Prescrição
+    name: Dia Prescrição
+    type: date
+  - at: 4
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 5
+    header: Nº Exames Prescritos
+    name: Nº Exames Prescritos
+    type: int
+pages_expect: {}
+no_pages: false

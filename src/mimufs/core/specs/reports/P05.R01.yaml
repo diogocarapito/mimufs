@@ -1,0 +1,46 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P05.R01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Episódios > Sexo e Grupo Etário
+group: Problemas
+level: doctor
+required: false
+purpose: Consultas por código ICPC (episódios), por médico. Sem identificação de utentes.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Ano = {ano}; Médico Consulta = (ver nota); restantes páginas = Total.
+- Exporte para Excel.
+slots:
+  kind: year
+pages_expect:
+  Grupo Etário 7: Total
+  Sexo: Total
+  Flag Médico Família: Total
+  Médico Familia: Total
+  Area ICPC: Total
+doctor_pages:
+- Médico Consulta
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: ICPC
+    name: ICPC
+    type: str
+    role: icpc
+  - at: 1
+    header: ''
+    name: ICPC_Descricao
+    type: str
+  - at: 2
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 3
+    header: Qtd Consultas ICPC
+    name: Qtd Consultas ICPC
+    type: int
+filter_expect: {}
+no_pages: false

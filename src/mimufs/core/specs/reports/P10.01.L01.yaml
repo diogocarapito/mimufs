@@ -1,0 +1,78 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P10.01.L01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Resultados Biométricos > Utente
+group: Biometrias
+level: patient
+required: true
+purpose: Último registo de peso, altura, PA sistólica, PA diastólica e “DM desde”. Uma extração por tipo de dado.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Unidade Funcional = {unidade}; Flag Médico Família = C/ Med Fam.
+- 'Em Tipo Dado escolha um só tipo (ex.: Altura(Cm)) e exporte.'
+- Repita para os 5 tipos.
+slots:
+  kind: values
+  key: filter.Tipo Dado
+  months:
+  - 12
+  values:
+    peso: (?i)^peso
+    altura: (?i)^altura
+    pas: (?i)^(tas|pas|t\.?a\.?\s*sist|press[aã]o.*sist)
+    pad: (?i)^(tad|pad|t\.?a\.?\s*diast|press[aã]o.*diast)
+    dm_desde: (?i)(dm|diabetes)\s*desde
+  note: 'Exemplos reais: ''Altura(Cm)'', ''TAd''. Padrões a confirmar com os 5 nomes reais.'
+pages_expect:
+  Flag Médico Família: C/ Med Fam
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 1
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 2
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 3
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 4
+    header: Idade
+    name: Idade
+    type: int
+  - at: 5
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+  - at: 6
+    header: Médico Familia
+    name: Médico Familia
+    role: doctor
+    type: str
+  - at: 7
+    header: Data Último Registo
+    name: Data Último Registo
+    type: date
+  - at: 8
+    header: Resultado Último Registo
+    name: Resultado Último Registo
+    type: str
+    parse: decimal_pt
+doctor_pages: []
+filter_expect: {}
+no_pages: false

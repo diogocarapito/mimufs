@@ -1,0 +1,68 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P04.01.L01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Problemas > Utente
+group: Problemas
+level: patient
+required: true
+purpose: Problemas ativos de todos os códigos ICPC-2, extraídos em 3 conjuntos de códigos.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Unidade Funcional = {unidade}; Flag Médico Família = Total; Médico Familia = Total; Médico de Registo = Total.
+- No filtro ICPC, cole os códigos de um conjunto (botão “Copiar códigos”).
+- Exporte para Excel e repita para os 3 conjuntos.
+slots:
+  kind: icpc_sets
+  sets_file: icpc_mimuf_batches.json
+  months:
+  - 12
+pages_expect:
+  Flag Médico Família: Total
+  Médico Familia: Total
+  Médico de Registo: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 1
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 2
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 3
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 4
+    header: Idade
+    name: Idade
+    type: int
+  - at: 5
+    header: ICPC
+    name: ICPC
+    type: str
+    role: icpc
+  - at: 6
+    header: ''
+    name: ICPC_Descricao
+    type: str
+  - at: 7
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+doctor_pages: []
+filter_expect: {}
+no_pages: false

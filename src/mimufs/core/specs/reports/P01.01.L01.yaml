@@ -1,0 +1,68 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P01.01.L01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Inscritos > Utente
+group: Inscritos
+level: patient
+required: true
+purpose: Base de utentes inscritos e médico de família. Janeiro vs dezembro identifica quem saiu da lista.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-01; Unidade Funcional = {unidade}; Flag Médico Família = C/ Med Fam; Frequentador = Total; Grupo Etário = Total.
+- Exporte para Excel.
+- Repita com Mês = {ano}-12.
+slots:
+  kind: months
+  months:
+  - 1
+  - 12
+pages_expect:
+  Flag Médico Família: C/ Med Fam
+  Frequentador: Total
+  Grupo Etário: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 1
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 2
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 3
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 4
+    header: Idade
+    name: Idade
+    type: int
+  - at: 5
+    header: Data Nascimento
+    name: Data Nascimento
+    type: date
+  - at: 6
+    header: Médico Familia
+    name: Médico Familia
+    role: doctor
+    type: str
+  - at: 7
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+doctor_pages: []
+filter_expect: {}
+no_pages: false

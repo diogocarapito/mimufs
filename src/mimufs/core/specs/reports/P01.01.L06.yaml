@@ -1,0 +1,40 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P01.01.L06
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Famílias > Contactos Actuais
+group: Inscritos
+level: family
+required: false
+purpose: 'Número de utentes por família. Não identifica utentes: usado só como agregado da unidade.'
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Unidade Funcional = {unidade}; Flag Médico Família = Total; Médico Familia = Total; Frequentador Actual = Total.
+- Exporte para Excel.
+slots:
+  kind: months
+  months:
+  - 12
+pages_expect:
+  Flag Médico Família: Total
+  Médico Familia: Total
+  Frequentador Actual: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: Local
+    name: Local
+    type: cat
+  - at: 1
+    header: Família
+    name: Família
+    type: str
+  - at: 2
+    header: Nº Utentes Familia
+    name: Nº Utentes Familia
+    type: int
+doctor_pages: []
+filter_expect: {}
+no_pages: false

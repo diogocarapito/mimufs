@@ -1,0 +1,100 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P01.01.L03
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Inscritos > Dados dos Utentes
+group: Inscritos
+level: patient
+required: true
+purpose: Nacionalidade, habilitações, profissão, tipo de inscrição e motivo de isenção.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Unidade Funcional = {unidade}; Flag Médico Família = Total; Enfermeiro de Família = Total.
+- Exporte para Excel.
+slots:
+  kind: months
+  months:
+  - 12
+pages_expect:
+  Flag Médico Família: Total
+  Enfermeiro de Família: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 1
+    header: Tipo de inscrição atual
+    name: Tipo de inscrição atual
+    type: cat
+  - at: 2
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 3
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 4
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 5
+    header: Idade
+    name: Idade
+    type: int
+  - at: 6
+    header: Data Nascimento
+    name: Data Nascimento
+    type: date
+  - at: 7
+    header: Médico Familia
+    name: Médico Familia
+    role: doctor
+    type: str
+  - at: 8
+    header: Motivo Isenção Tx. Moderadora
+    name: Motivo Isenção Tx. Moderadora
+    type: cat
+  - at: 9
+    header: Morada
+    name: Morada
+    type: str
+    drop: true
+  - at: 10
+    header: Código Postal
+    name: Código Postal
+    type: str
+    drop: true
+  - at: 11
+    header: Telefone
+    name: Telefone
+    type: str
+    drop: true
+  - at: 12
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+  - at: 13
+    header: País de Nacionalidade
+    name: País de Nacionalidade
+    type: cat
+  - at: 14
+    header: Habilitacao Literaria
+    name: Habilitacao Literaria
+    type: cat
+  - at: 15
+    header: Profissao
+    name: Profissao
+    type: cat
+doctor_pages: []
+filter_expect: {}
+no_pages: false

@@ -1,0 +1,47 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P04.R06
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Top Problemas > UF e Médico
+group: Problemas
+level: unit
+required: false
+purpose: Problemas mais frequentes da unidade.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Médico Familia = Total.
+- Exporte para Excel.
+slots:
+  kind: months
+  months:
+  - 12
+pages_expect:
+  Médico Familia: Total
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: ICPC
+    name: ICPC
+    type: str
+    role: icpc
+  - at: 1
+    header: ''
+    name: ICPC_Descricao
+    type: str
+  - at: 2
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 3
+    header: Qtd Problemas
+    name: Qtd Problemas
+    type: int
+  - at: 4
+    header: TOP
+    name: TOP
+    type: int
+doctor_pages: []
+filter_expect: {}
+no_pages: false

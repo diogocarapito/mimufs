@@ -1,0 +1,26 @@
+{
+ "medicamentos": {
+  "file": "medicamentos.csv",
+  "version": "1",
+  "sha256": "edef28730efdce6798ec25efa284eae53952703760fe0d0690566d88f69df1fa",
+  "source": "Diogo Carapito",
+  "source_date": "2026-11-24",
+  "user_editable": true
+ },
+ "icpc2": {
+  "file": "icpc2_pt_v4_4.csv",
+  "version": "1",
+  "sha256": "929cb330b0bb514063640ba183ccf93fc4022ac2e76aee4c562d6cf0caf32f29",
+  "source": "SDM/ACSS ICPC-2e v4.4 PT",
+  "source_date": "2015-03-27",
+  "user_editable": false
+ },
+ "indicadores": {
+  "file": "indicadores_intervalos.csv",
+  "version": "1",
+  "sha256": "41bf9a26baca02b61eafb92504f1cde8a44d980db1bf712d45de4457261f5a79",
+  "source": "github.com/diogocarapito/datasets_indicadores @5c05426",
+  "source_date": "2024-10-24",
+  "user_editable": false
+ }
+}

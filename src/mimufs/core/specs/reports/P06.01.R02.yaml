@@ -1,0 +1,83 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P06.01.R02
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Medicamentos Prescritos > DCI e Medicamento > Médico
+group: Medicação & MCDT
+level: doctor
+required: false
+purpose: Prescrição agregada por DCI e medicamento, por médico (inclui custos).
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Ano = {ano}; Flag Médico Família = C/ Med Fam; Médico = (ver nota).
+- Exporte para Excel.
+slots:
+  kind: year
+pages_expect:
+  Flag Médico Família: C/ Med Fam
+doctor_pages:
+- Médico
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: DCI (CNPEM)
+    name: DCI (CNPEM)
+    type: str
+  - at: 1
+    header: ''
+    name: DCI_Descricao
+    type: str
+  - at: 2
+    header: Medicamento
+    name: Medicamento
+    type: str
+    role: medication
+  - at: 3
+    header: Embalagem
+    name: Embalagem
+    type: str
+  - at: 4
+    header: Métrica
+    name: Métrica
+    type: ignore
+  - at: 5
+    header: Número Utentes com Prescrição
+    name: Número Utentes com Prescrição
+    type: int
+  - at: 6
+    header: Nº Receitas Prescritas
+    name: Nº Receitas Prescritas
+    type: int
+  - at: 7
+    header: Nº Embalagens Prescritas
+    name: Nº Embalagens Prescritas
+    type: int
+  - at: 8
+    header: PVP Medicam Prescritos
+    name: PVP Medicam Prescritos
+    type: float
+  - at: 9
+    header: SNS Medicam Prescritos
+    name: SNS Medicam Prescritos
+    type: float
+  - at: 10
+    header: Medicam Prescrito / 3º + Barato (Custo - PVP)
+    name: Medicam Prescrito / 3º + Barato (Custo - PVP)
+    type: float
+  - at: 11
+    header: Medicam Prescrito / 3º + Barato (Custo - SNS)
+    name: Medicam Prescrito / 3º + Barato (Custo - SNS)
+    type: float
+  - at: 12
+    header: Medicam Prescrito / 5º + Barato (Custo - PVP)
+    name: Medicam Prescrito / 5º + Barato (Custo - PVP)
+    type: float
+  - at: 13
+    header: Medicam Prescrito / 5º + Barato (Custo - SNS
+    name: Medicam Prescrito / 5º + Barato (Custo - SNS)
+    type: float
+    match: startswith
+filter_expect: {}
+no_pages: false

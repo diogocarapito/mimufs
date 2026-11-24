@@ -1,0 +1,20 @@
+code: SCLINICO.consultas
+source: sclinico_pdf
+title: Lista de consultas realizadas
+group: Consultas
+level: patient_event
+required: true
+purpose: Consultas realizadas por utente e profissional; base dos tipos de consulta (passo de normalização).
+instructions:
+- 'TODO (Diogo): caminho no SClínico Administrativo para exportar o PDF.'
+- Largue o PDF aqui (ou um CSV com as colunas do contrato).
+slots:
+  kind: year
+output_contract:
+- data_consulta
+- utente
+- nop
+- profissional
+- tipo_consulta
+- local
+todo: Opções do tabula.read_pdf, nomes de colunas e limpeza vêm do script do Diogo (passo Claude Code).

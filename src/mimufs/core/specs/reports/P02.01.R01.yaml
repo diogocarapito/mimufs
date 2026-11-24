@@ -1,0 +1,69 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P02.01.R01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Indicadores da unidade funcional
+group: Indicadores
+level: unit
+required: true
+purpose: Cerca de 200 indicadores da unidade, comparados com os intervalos esperados e aceitáveis.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- 'Mês = {ano}-12; Ano Contratual = {ano}; Grupo de Indicadores = Todos os Indicadores; Tipo Indicador: todos os tipos.'
+- Exporte para Excel.
+slots:
+  kind: months
+  months:
+  - 12
+filter_expect:
+  Ano Contratual: '{ano}'
+  Grupo de Indicadores: Todos os Indicadores
+header:
+  rows: 2
+  note: 'Linha 1: dimensões + ''Mês'' e o mês em cada coluna de métrica; linha 2: ''Métrica'' e os nomes das métricas. Colunas 2–4 sem título: confirmar conteúdo com um ficheiro real.'
+  columns:
+  - at: 0
+    header: Unidade Funcional / Polo Hospitalar
+    name: Unidade Funcional / Polo Hospitalar
+    type: str
+    role: unit
+  - at: 1
+    header: Indicador
+    name: Indicador
+    type: str
+    role: indicator
+  - at: 2
+    header: ''
+    name: Indicador_2
+    type: str
+  - at: 3
+    header: ''
+    name: Indicador_3
+    type: str
+  - at: 4
+    header: ''
+    name: Indicador_4
+    type: str
+  - at: 5
+    header: Mês
+    name: Mês
+    type: ignore
+  - at: 6
+    header: Num.
+    name: Num.
+    type: float
+    row2: true
+  - at: 7
+    header: Den.
+    name: Den.
+    type: float
+    row2: true
+  - at: 8
+    header: Valor
+    name: Valor
+    type: float
+    row2: true
+doctor_pages: []
+pages_expect: {}
+no_pages: false

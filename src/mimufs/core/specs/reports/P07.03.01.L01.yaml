@@ -1,0 +1,80 @@
+# Generated from docs/reference/MIMUF_Header_examples.xlsx (real headers, no patient data).
+# Column 'at' = 0-based column index; 'header' = text in the file ('' = untitled); 'name' = canonical name.
+code: P07.03.01.L01
+source: mimuf
+doctor_pages_default: total_or_project_doctor
+title: Resultados MCDTs > Utente
+group: Medicação & MCDT
+level: patient
+required: true
+purpose: Último resultado de cada análise no período, por utente.
+instructions:
+- 'TODO (Diogo): caminho exato no menu do MIM@UF.'
+- Mês = {ano}-12; Unidade Funcional = {unidade}; Flag Médico Família = C/ Med Fam.
+- 'Em Exame MCDT escolha uma análise (ex.: 651029:Colesterol total) e exporte.'
+- Repita para as 7 análises.
+slots:
+  kind: values
+  key: filter.Exame MCDT
+  months:
+  - 12
+  values:
+    colesterol_total: (?i)colesterol\s*total
+    hdl: (?i)\bhdl\b
+    trigliceridos: (?i)triglic
+    ldl: (?i)\bldl\b
+    hba1c: (?i)(hba1c|hemoglobina\s*a1c|glicada)
+    creatinina: (?i)creatinin
+    albuminuria: (?i)(albumin|microalb)
+  note: 'Exemplo real: ''651029:Colesterol total, s/l''. Valor = ''código:nome''. Padrões a confirmar com os nomes reais das 7 análises; um exame não reconhecido pede ao utilizador que escolha a variável.'
+pages_expect:
+  Flag Médico Família: C/ Med Fam
+header:
+  rows: 1
+  columns:
+  - at: 0
+    header: NOP
+    name: NOP
+    role: nop
+    type: str
+  - at: 1
+    header: Utente
+    name: Utente
+    role: sns
+    type: str
+    required: true
+  - at: 2
+    header: ''
+    name: Nome
+    type: str
+    pii: true
+    export_default: false
+  - at: 3
+    header: Sexo
+    name: Sexo
+    type: cat
+  - at: 4
+    header: Idade
+    name: Idade
+    type: int
+  - at: 5
+    header: Freguesia Habitação
+    name: Freguesia Habitação
+    type: str
+  - at: 6
+    header: Médico Familia
+    name: Médico Familia
+    role: doctor
+    type: str
+  - at: 7
+    header: Data Último MCDT
+    name: Data Último MCDT
+    type: date
+  - at: 8
+    header: Resultado Último MCDT
+    name: Resultado Último MCDT
+    type: str
+    parse: decimal_pt
+doctor_pages: []
+filter_expect: {}
+no_pages: false

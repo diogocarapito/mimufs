@@ -1,0 +1,76 @@
+medicamento,grupo,doenca
+ozempic,analogo de GLP-1,diabetes
+lantus,insulina,diabetes
+linagliptina,inibidor de DPP-4,diabetes
+insulina,insulina,diabetes
+ebymect,biguanida,diabetes
+ebymect,inibidor de SGLT2,diabetes
+trulicity,analogo de GLP-1,diabetes
+jardiance,inibidor de SGLT2,diabetes
+penfill,insulina,diabetes
+glyxambi,inibidor de DPP-4,diabetes
+glyxambi,inibidor de SGLT2,diabetes
+liraglutido,analogo de GLP-1,diabetes
+dapagliflozina,inibidor de SGLT2,diabetes
+tresiba,insulina,diabetes
+abasaglar,insulina,diabetes
+kwikpen,insulina,diabetes
+insulatard,insulina,diabetes
+synjardy,biguanida,diabetes
+synjardy,inibidor de SGLT2,diabetes
+levemir,insulina,diabetes
+vildagliptina,inibidor de DPP-4,diabetes
+pioglitazona,glitazona,diabetes
+sitagliptina,inibidor de DPP-4,diabetes
+empagliflozina,inibidor de SGLT2,diabetes
+degludec,insulina,diabetes
+xigduo,biguanida,diabetes
+xigduo,inibidor de SGLT2,diabetes
+stagid,biguanida,diabetes
+jentadueto,inibidor de DPP-4,diabetes
+jentadueto,biguanida,diabetes
+edistride,inibidor de SGLT2,diabetes
+forxiga,inibidor de SGLT2,diabetes
+humalog,insulina,diabetes
+metformina,biguanida,diabetes
+gliclazida,sulfonilureia,diabetes
+dulaglutido,analogo de GLP-1,diabetes
+amilorida,diurético,hta
+eplerenona,diurético,hta
+hygroton,diurético,hta
+lercanidipina,antagonista de canais cálcio,hta
+espironolactona,diurético,hta
+azilsartan,eixo renina,hta
+furosemida,diurético,hta
+olmesartan,eixo renina,hta
+carvedilol,beta bloqueador,hta
+propranolol,beta bloqueador,hta
+edarclor,eixo renina,hta
+edarclor,diurético,hta
+co-amlessa,antagonista de canais cálcio,hta
+co-amlessa,diurético,hta
+co-amlessa,eixo renina,hta
+hidroclorotiazida,diurético,hta
+bisoprolol,beta bloqueador,hta
+candesartan,eixo renina,hta
+irbesartan,eixo renina,hta
+verapamilo,antagonista de canais cálcio,hta
+atenolol,beta bloqueador,hta
+ramipril,eixo renina,hta
+rilmenidina,alfa2,hta
+triplixam,eixo renina,hta
+triplixam,diurético,hta
+triplixam,antagonista de canais cálcio,hta
+perindopril,eixo renina,hta
+amlodipina,antagonista de canais cálcio,hta
+telmisartan,eixo renina,hta
+valsartan,eixo renina,hta
+enalapril,eixo renina,hta
+isoptin,antagonista de canais cálcio,hta
+nebivolol,beta bloqueador,hta
+losartan,eixo renina,hta
+lisinopril,eixo renina,hta
+edarbi,eixo renina,hta
+indapamida,diurético,hta
+nifedipina,antagonista de canais cálcio,hta
+zofenopril,eixo renina,hta
