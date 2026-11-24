@@ -8,6 +8,7 @@ name: Release
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:  # dry run from any branch: builds and self-tests, publishes nothing
 
 permissions:
   contents: read
@@ -32,11 +33,17 @@ jobs:
         with:
           version: ${{ env.UV_VERSION }}
       - name: Tag is on main
+        if: github.ref_type == 'tag'
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
       - name: Tag = pyproject version, with a dated CHANGELOG section
-        run: >-
-          uv run --no-project --python 3.12 python scripts/release_notes.py
-          "$GITHUB_REF_NAME" --check-pyproject > release-notes.md
+        run: |
+          version="$GITHUB_REF_NAME"
+          if [ "$GITHUB_REF_TYPE" != tag ]; then
+            version="$(uv run --no-project --python 3.12 python -c \
+              "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")"
+          fi
+          uv run --no-project --python 3.12 python scripts/release_notes.py \
+            "$version" --check-pyproject > release-notes.md
       - name: Site (version.json, changelog) already generated for this version
         run: uv run --no-project --python 3.12 python scripts/build_site.py --check
       - uses: actions/upload-artifact@v4
@@ -71,11 +78,16 @@ jobs:
           java-version: "21"
       - name: Build tools and Qt runtime libraries (Linux)
         if: runner.os == 'Linux'
-        run: >-
-          sudo apt-get update && sudo apt-get install -y --no-install-recommends
-          python3-dev python3-venv build-essential dpkg-dev flatpak flatpak-builder
-          libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3
-          libxcb-cursor0 libglib2.0-0t64
+        # Briefcase refuses to build unless every system_runtime_requires package is installed,
+        # so the list is read from pyproject.toml rather than repeated here.
+        run: |
+          runtime="$(python3 -c "import tomllib; c = tomllib.load(open('pyproject.toml', 'rb')); \
+            print(' '.join(c['tool']['briefcase']['app']['mimufs']['linux']['system']['debian']\
+            ['system_runtime_requires']))")"
+          sudo apt-get update
+          # shellcheck disable=SC2086  # word-splitting the package list is intended
+          sudo apt-get install -y --no-install-recommends \
+            python3-dev python3-venv build-essential dpkg-dev flatpak flatpak-builder $runtime
       - run: uv sync --locked
       - name: Minimal Java runtime for tabula (jlink)
         run: bash packaging/jre/build_jre.sh
@@ -155,6 +167,7 @@ jobs:
   publish:
     name: GitHub Release
     needs: build
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -178,6 +191,7 @@ jobs:
   site:
     name: Deploy mimufs.com
     needs: publish
+    if: github.ref_type == 'tag'
     permissions:
       contents: read
       pages: write

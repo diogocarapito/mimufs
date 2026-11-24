@@ -1,7 +1,7 @@
 [project]
 name = "mimufs"
 version = "0.0.1"
-description = "Guided, local-only processing of MIM@UF reports for Portuguese family-medicine units"
+description = "Guided, local-only processing of MIM@UF reports for Portuguese family medicine"
 readme = "README.md"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
