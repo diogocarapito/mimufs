@@ -1,0 +1,13 @@
+{
+  "latest": "0.0.1",
+  "released": "2026-11-24",
+  "min_supported": null,
+  "download_url": "https://mimufs.com/#download",
+  "notes_pt": [
+    "Primeira versão instalável para Windows, macOS (Apple Silicon e Intel) e Linux.",
+    "Leitura dos ficheiros exportados do MIM@UF (incluindo os .xls que na verdade são .xlsx).",
+    "Reconhecimento automático dos 17 relatórios do MIM@UF a partir do cabeçalho de cada ficheiro.",
+    "Java incluído na aplicação para ler o PDF de consultas do SClínico (não é preciso instalar nada).",
+    "Proteção de rede: a aplicação não consegue enviar dados para a internet."
+  ]
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self'; script-src 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Sobre · mimufs</title>
+<meta name="description" content="O que é o mimufs, quem o faz, licença e privacidade.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="index.html"><img src="favicon.svg" alt="" width="22" height="22">mimufs</a>
+  <nav><a href="index.html">Início</a><a href="sobre.html" aria-current="page">Sobre</a><a href="changelog.html">Novidades</a></nav>
+</header>
+
+<main class="page">
+<p class="kicker">MIMUFS · SOBRE</p>
+<h1>Sobre o mimufs</h1>
+<p class="lead">Uma aplicação para médicos de família que precisam de transformar os relatórios do MIM@UF e a lista de
+consultas do SClínico numa base de dados limpa, com uma linha por utente, sem passar dias no Excel.</p>
+
+<h2>O que faz</h2>
+<ol class="steps">
+  <li><strong>Extração e importação</strong>: instruções clique a clique para cada relatório do MIM@UF; arraste os ficheiros
+  exportados e o mimufs reconhece cada um e verifica unidade, período, filtros, colunas, ficheiros cortados e duplicados.</li>
+  <li><strong>Agregação</strong>: junta todos os ficheiros numa tabela com uma linha por utente.</li>
+  <li><strong>Qualidade dos dados</strong>: sugere correções para valores improváveis (análises, biometrias). O valor original
+  fica sempre guardado e cada alteração fica registada.</li>
+  <li><strong>Normalização</strong>: o seu próprio mapeamento dos tipos de consulta.</li>
+  <li><strong>Exportação</strong>: tabelas em Excel, CSV ou Parquet, para a unidade ou por médico.</li>
+</ol>
+
+<h2 id="privacidade">Privacidade</h2>
+<p>O mimufs foi feito para dados de saúde. <strong>Tudo corre no seu computador e os dados dos utentes nunca saem dele.</strong>
+Não há contas, estatísticas de utilização, relatórios de erros enviados, publicidade nem tipos de letra descarregados da internet.
+A aplicação bloqueia internamente qualquer tentativa de ligação à rede.</p>
+<p>A <strong>única</strong> ligação que a aplicação faz é a verificação de novas versões, no máximo uma vez por dia, ao abrir.
+É exatamente este pedido, e nada mais:</p>
+<p><code>GET https://mimufs.com/version.json</code> com um único cabeçalho, <code>User-Agent: mimufs/&lt;versão&gt;</code>.</p>
+<p>Não envia cookies, identificadores, nome da unidade, nome do médico nem dados de utentes. Pode desligar esta verificação
+nas Definições da aplicação. Mesmo ligada, se o computador não tiver internet a aplicação funciona normalmente.</p>
+<p>Este site também não usa cookies, estatísticas de visitas nem recursos de terceiros. Os ficheiros de instalação são
+servidos pelo GitHub.</p>
+
+<h2>Quem o faz</h2>
+<p>O mimufs é desenvolvido por Diogo Carapito, médico de família, com contributos da comunidade. Não é um produto
+oficial dos SPMS nem do SNS; o MIM@UF e o SClínico são sistemas dos SPMS.</p>
+
+<h2>Licença e contributos</h2>
+<p>O mimufs é software livre, publicado sob a licença <a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU GPL v3.0</a>.
+Pode usá-lo, estudá-lo, alterá-lo e partilhá-lo. O código-fonte, a lista de problemas conhecidos e as instruções para
+contribuir estão no <a href="https://github.com/diogocarapito/mimufs">GitHub</a>. Para reportar um problema, nunca anexe
+ficheiros com dados de utentes.</p>
+</main>
+
+<footer class="foot"><p>mimufs · software livre (GPL-3.0) · <a href="https://github.com/diogocarapito/mimufs">código-fonte</a></p></footer>
+</body>
+</html>
