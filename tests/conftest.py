@@ -16,3 +16,11 @@ def header_example_files(tmp_path_factory: pytest.TempPathFactory) -> dict[str, 
 @pytest.fixture(scope="session")
 def header_example_rows() -> dict[str, list[list[object]]]:
     return make_fixtures.header_example_rows()
+
+
+@pytest.fixture(scope="session")
+def synthetic_fixtures(
+    tmp_path_factory: pytest.TempPathFactory,
+) -> dict[str, make_fixtures.Fixture]:
+    """Every synthetic fixture (valid files per slot, variants, SClínico), generated once."""
+    return make_fixtures.generate(tmp_path_factory.mktemp("synthetic"))
