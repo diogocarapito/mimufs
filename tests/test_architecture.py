@@ -36,7 +36,9 @@ def _python_files(folder: Path) -> list[Path]:
 
 def test_core_never_imports_qt() -> None:
     offenders = {
-        str(path.relative_to(SRC)): sorted(n for n in _imports(path) if n.startswith(QT_MODULES))
+        path.relative_to(SRC).as_posix(): sorted(
+            n for n in _imports(path) if n.startswith(QT_MODULES)
+        )
         for path in _python_files(SRC / "core")
     }
     assert {k: v for k, v in offenders.items() if v} == {}
@@ -44,7 +46,7 @@ def test_core_never_imports_qt() -> None:
 
 def test_no_network_libraries_anywhere() -> None:
     offenders = {
-        str(path.relative_to(SRC)): sorted(
+        path.relative_to(SRC).as_posix(): sorted(
             n for n in _imports(path) if n.startswith(NETWORK_MODULES)
         )
         for path in _python_files(SRC)
@@ -54,7 +56,7 @@ def test_no_network_libraries_anywhere() -> None:
 
 def test_urllib_only_in_the_update_module() -> None:
     users = {
-        str(path.relative_to(SRC))
+        path.relative_to(SRC).as_posix()
         for path in _python_files(SRC)
         if any(n == "urllib.request" or n.startswith("urllib.request.") for n in _imports(path))
     }
@@ -71,7 +73,7 @@ def test_duckdb_connections_have_extension_downloads_off(tmp_path: Path) -> None
 
 def test_duckdb_only_connected_through_core_db() -> None:
     callers = {
-        str(path.relative_to(SRC))
+        path.relative_to(SRC).as_posix()
         for path in _python_files(SRC)
         if "duckdb.connect(" in path.read_text(encoding="utf-8")
     }
