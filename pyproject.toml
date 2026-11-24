@@ -20,7 +20,7 @@ classifiers = [
 ]
 # Briefcase bundles exactly these (it reads [project].dependencies; see [tool.briefcase]).
 dependencies = [
-    "pyside6-essentials>=6.9,<6.10",  # 6.9 is the last with macOS 12 wheels (PRD §9)
+    "pyside6-essentials>=6.12",  # 6.12 wheels need macOS 14 (PRD §9)
     "polars>=1.20",
     "duckdb>=1.1",
     "pyarrow>=18",
@@ -218,7 +218,7 @@ cleanup_paths = [
 
 [tool.briefcase.app.mimufs.macOS]
 universal_build = false  # one build per architecture (arm64, x86_64)
-min_os_version = "12.0"  # PRD §9; PySide6 6.10+ would need macOS 13, 6.12 needs 14
+min_os_version = "14.0"  # PRD §9; PySide6 6.12 wheels need macOS 14 Sonoma
 requires = ["std-nslog~=1.0.3"]  # stdout/stderr → macOS unified log (briefcase run)
 
 [tool.briefcase.app.mimufs.linux.system.debian]

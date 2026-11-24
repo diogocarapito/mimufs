@@ -318,7 +318,7 @@ No analytics, cookies or third-party scripts/fonts on the website either.
 | Area | Requirement |
 |---|---|
 | **Privacy** | No outbound network traffic except the update check (verified by automated test). No telemetry, crash reporting or remote fonts/web views. Logs never contain patient data. |
-| **Platforms** | Windows 10/11 x64; macOS 12+ (Apple Silicon **and Intel**); Linux x86_64 (`.deb` and Flatpak). |
+| **Platforms** | Windows 10/11 x64; macOS 14+ (Apple Silicon **and Intel**; raised from 12+ on 2026-11-24 to use current Qt); Linux x86_64 (`.deb` and Flatpak). |
 | **No admin rights** | Windows **portable ZIP** that runs from the user folder or a USB drive, plus a per-user installer that needs no admin. |
 | **Performance** | Import and validate 100 files in < 60 s; build the dataset (30k × 800) in < 30 s; UI stays responsive (long work runs in background with progress). Target machine: 8 GB RAM, 4-core laptop. |
 | **Reliability** | Projects saved after every completed action; crash-safe (no partial writes). |
