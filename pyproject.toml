@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Medical Science Apps.",
 ]
-# Keep in sync with [tool.briefcase.app.mimufs].requires (checked by tests/test_packaging.py).
+# Briefcase bundles exactly these (it reads [project].dependencies; see [tool.briefcase]).
 dependencies = [
     "pyside6-essentials>=6.8",
     "polars>=1.20",
@@ -103,3 +103,138 @@ markers = [
     "gui: Qt widget tests (pytest-qt, offscreen)",
     "needs_input: waits for an input from Diogo (see CLAUDE.md); marked xfail until it arrives",
 ]
+
+# --------------------------------------------------------------------------- briefcase
+# Version, description, licence, URLs and dependencies come from [project] (PEP 621):
+# Briefcase adds [project].dependencies to `requires` itself, so there is one list only.
+
+[tool.briefcase]
+project_name = "mimufs"
+bundle = "com.mimufs"
+author = "Diogo Carapito"
+# author_email: TODO(Diogo) - shown as the .deb "Maintainer"; left unset on purpose.
+
+[tool.briefcase.app.mimufs]
+formal_name = "mimufs"
+long_description = """Guia passo a passo para extrair, validar, juntar e limpar os relatórios do \
+MIM@UF e do SClínico. Tudo corre neste computador: nenhum dado sai da máquina."""
+sources = ["src/mimufs"]
+icon = "packaging/icons/mimufs"
+# Bundles get exactly the versions in uv.lock (pip would otherwise pick the newest):
+# packaging/constraints.txt is `uv export` output; tests/test_packaging.py keeps it in sync.
+requirement_installer_args = ["--constraint", "./packaging/constraints.txt"]
+# Trim what mimufs never uses (TECH_SPECS §16.2). Patterns are globs relative to the bundle.
+# The Qt network stack (QtNetwork, TLS, network-information, TUIO and VNC plugins) goes too:
+# the app must not be able to reach the network through Qt (CLAUDE.md rule 1).
+cleanup_paths = [
+    # PySide6: Qt modules and their bindings, libraries (all OSes), QML/Quick assets.
+    "**/app_packages/PySide6/**/*Network*",
+    "**/app_packages/PySide6/**/*Qml*",
+    "**/app_packages/PySide6/**/*Quick*",
+    "**/app_packages/PySide6/**/*Labs*",
+    "**/app_packages/PySide6/**/*Lottie*",
+    "**/app_packages/PySide6/**/*Designer*",
+    "**/app_packages/PySide6/**/*Help*",
+    "**/app_packages/PySide6/**/*Sql*",
+    "**/app_packages/PySide6/**/*Test*",
+    "**/app_packages/PySide6/**/*UiTools*",
+    "**/app_packages/PySide6/**/*Concurrent*",
+    "**/app_packages/PySide6/**/*VirtualKeyboard*",
+    "**/app_packages/PySide6/**/*WebEngine*",
+    "**/app_packages/PySide6/QtOpenGL*",
+    "**/app_packages/PySide6/**/qml",
+    "**/app_packages/PySide6/**/metatypes",
+    "**/app_packages/PySide6/Qt/libexec",
+    "**/app_packages/PySide6/*.app",
+    "**/app_packages/PySide6/*.exe",
+    "**/app_packages/PySide6/lrelease",
+    "**/app_packages/PySide6/lupdate",
+    "**/app_packages/PySide6/qmlformat",
+    "**/app_packages/PySide6/qmllint",
+    "**/app_packages/PySide6/qmlls",
+    "**/app_packages/PySide6/svgtoqml",
+    "**/app_packages/PySide6/designer",
+    "**/app_packages/PySide6/assistant",
+    "**/app_packages/PySide6/linguist",
+    "**/app_packages/PySide6/include",
+    "**/app_packages/PySide6/typesystems",
+    "**/app_packages/PySide6/glue",
+    "**/app_packages/PySide6/doc",
+    "**/app_packages/PySide6/scripts",
+    "**/app_packages/PySide6/**/*.pyi",
+    "**/app_packages/PySide6/libpyside6qml*",
+    "**/app_packages/PySide6/lib/cmake",
+    # Qt plugins that are network-capable or need the removed modules.
+    "**/app_packages/PySide6/**/plugins/designer",
+    "**/app_packages/PySide6/**/plugins/generic",
+    "**/app_packages/PySide6/**/plugins/qmltooling",
+    "**/app_packages/PySide6/**/plugins/sqldrivers",
+    "**/app_packages/PySide6/**/plugins/tls",
+    "**/app_packages/PySide6/**/plugins/networkinformation",
+    "**/app_packages/PySide6/**/plugins/vectorimageformats",
+    "**/app_packages/PySide6/**/plugins/platforminputcontexts/*virtualkeyboard*",
+    "**/app_packages/PySide6/**/plugins/platforms/*vnc*",
+    "**/app_packages/PySide6/**/plugins/imageformats/*pdf*",
+    # Qt translations for tools and modules mimufs doesn't ship (qtbase_* and qt_* stay).
+    "**/app_packages/PySide6/**/translations/assistant_*",
+    "**/app_packages/PySide6/**/translations/designer_*",
+    "**/app_packages/PySide6/**/translations/linguist_*",
+    "**/app_packages/PySide6/**/translations/qt_help_*",
+    "**/app_packages/PySide6/**/translations/qtdeclarative_*",
+    "**/app_packages/PySide6/**/translations/qtconnectivity_*",
+    "**/app_packages/PySide6/**/translations/qtlocation_*",
+    "**/app_packages/PySide6/**/translations/qtmultimedia_*",
+    "**/app_packages/PySide6/**/translations/qtserialport_*",
+    "**/app_packages/PySide6/**/translations/qtwebengine_*",
+    "**/app_packages/PySide6/**/translations/qtwebsockets_*",
+    # Headers, sources and test suites of other dependencies.
+    "**/app_packages/pyarrow/include",
+    "**/app_packages/pyarrow/src",
+    "**/app_packages/pyarrow/tests",
+    "**/app_packages/pyarrow/**/*.pyx",
+    "**/app_packages/pyarrow/**/*.pxd",
+    "**/app_packages/pyarrow/**/*.pxi",
+    "**/app_packages/pyarrow/*flight*",
+    # pyarrow's remote filesystems (S3, GCS, Azure, HDFS): network code mimufs never needs.
+    "**/app_packages/pyarrow/*_s3*",
+    "**/app_packages/pyarrow/_gcsfs*",
+    "**/app_packages/pyarrow/_azurefs*",
+    "**/app_packages/pyarrow/_hdfs*",
+    "**/app_packages/pyarrow/_pyarrow_cpp_tests*",
+    "**/app_packages/pandas/tests",
+    "**/app_packages/numpy/**/tests",
+    "**/app_packages/numpy/_core/include",
+    # Console scripts of dependencies (pyside6-designer, f2py…) and unused stdlib parts.
+    "**/app_packages/bin",
+    "**/lib/python3.12/test",
+    "**/lib/python3.12/idlelib",
+    "**/lib/python3.12/tkinter",
+    "**/lib/python3.12/turtledemo",
+    "**/lib/python3.12/ensurepip",
+    "**/lib/python3.12/lib-dynload/_tkinter*",
+    "**/lib/python3.12/lib-dynload/_test*",
+    "**/lib/python3.12/lib-dynload/xxlimited*",
+]
+
+[tool.briefcase.app.mimufs.macOS]
+universal_build = false  # one build per architecture (arm64, x86_64)
+min_os_version = "14.0"  # PySide6 6.12 wheels need macOS 14 Sonoma (Intel Macs from 2018 too)
+requires = ["std-nslog~=1.0.3"]  # stdout/stderr → macOS unified log (briefcase run)
+
+[tool.briefcase.app.mimufs.linux.system.debian]
+system_requires = []
+# Qt 6 runtime libraries (https://doc.qt.io/qt-6/linux-requirements.html).
+system_runtime_requires = [
+    "libxext6", "libxrender1", "libx11-xcb1", "libxkbcommon-x11-0", "libxcb-image0",
+    "libxcb-cursor0", "libxcb-shape0", "libxcb-randr0", "libxcb-xfixes0", "libxcb-sync1",
+    "libxcb-icccm4", "libxcb-keysyms1", "libfontconfig1", "libsm6", "libice6",
+    "libglib2.0-0", "libgl1", "libegl1", "libdbus-1-3",
+]
+
+[tool.briefcase.app.mimufs.linux.flatpak]
+flatpak_runtime = "org.kde.Platform"
+flatpak_runtime_version = "6.9"
+flatpak_sdk = "org.kde.Sdk"
+
+[tool.briefcase.app.mimufs.windows]
+system_installer = false  # per-user MSI: no admin rights needed on SPMS PCs

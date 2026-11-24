@@ -1,0 +1,57 @@
+annotated-types==0.8.0
+    # via pydantic
+distro==1.9.0
+    # via tabula-py
+duckdb==2.0.1
+    # via mimufs
+et-xmlfile==2.0.0
+    # via openpyxl
+numpy==2.5.5
+    # via
+    #   pandas
+    #   tabula-py
+openpyxl==3.1.5
+    # via mimufs
+packaging==26.4
+    # via mimufs
+pandas==3.1.1
+    # via tabula-py
+platformdirs==4.14.8
+    # via mimufs
+polars==2.1.0
+    # via mimufs
+polars-runtime-32==2.1.0
+    # via polars
+pyarrow==26.0.1
+    # via mimufs
+pydantic==2.14.4
+    # via mimufs
+pydantic-core==2.50.5
+    # via pydantic
+pyside6-essentials==6.12.0
+    # via mimufs
+python-dateutil==4.0.0
+    # via pandas
+pyyaml==6.0.4
+    # via mimufs
+shiboken6==6.12.0
+    # via pyside6-essentials
+tabula-py==2.11.0
+    # via mimufs
+truststore==0.10.5
+    # via mimufs
+typing-extensions==4.16.0
+    # via
+    #   pydantic
+    #   pydantic-core
+    #   typing-inspection
+typing-inspection==0.4.5
+    # via pydantic
+tzdata==2026.6
+    # via
+    #   pandas
+    #   python-dateutil
+xlrd==2.0.2
+    # via mimufs
+xlsxwriter==3.3.4
+    # via mimufs
