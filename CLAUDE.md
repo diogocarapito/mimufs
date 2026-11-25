@@ -58,7 +58,7 @@ Keep these working; update this section if a command changes.
 - **Before restructuring**, tag the current state of the repo `legacy-autogui` (the old pyautogui/Nuitka experiment) and remove `pyautogui`, `opencv-python`, `Nuitka`, `requests` and the `Dockerfile` (TECH_SPECS §1.2).
 - Write tests with the code. Every validation check (V/S/J) needs a fixture that triggers it and a test asserting its status and PT-PT message.
 - The offline e2e test (`tests/e2e/test_pipeline_offline.py`) must pass on all 3 OSes before any milestone is called done.
-- Small, focused commits (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`). Branch per milestone; don't push to `main` without Diogo's OK.
+- Small, focused commits (Conventional Commits: `feat:`, `fix:`, `test:`, `docs:`, `chore:`). Work directly on `main` (Diogo, 2026-11-25): push commits that pass the local checks; CI runs on every push. Release tags (`vX.Y.Z`) and site deploys still need Diogo's OK (TECH_SPECS §16.3 has the release flow).
 - Keep `docs/PRD.md` and `docs/TECH_SPECS.md` in sync with decisions made while building, in the same commit as the code that changes them.
 
 ## Inputs still needed from Diogo (ask when you reach them)
