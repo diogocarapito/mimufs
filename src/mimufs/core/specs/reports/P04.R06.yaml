@@ -4,6 +4,7 @@ code: P04.R06
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Top Problemas > UF e Médico
+short_title: Top problemas
 group: Problemas
 level: unit
 required: false

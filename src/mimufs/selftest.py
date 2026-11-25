@@ -127,7 +127,10 @@ def check_qt(tmp: Path) -> str:
     from mimufs.settings import SettingsStore
 
     app = create_application([sys.argv[0] if sys.argv else "mimufs"])
-    window = MainWindow(SettingsStore(tmp / "settings.json"))  # never the user's settings
+    from mimufs.core.dictionaries import Dictionaries
+
+    # never the user's settings or dictionaries
+    window = MainWindow(SettingsStore(tmp / "settings.json"), Dictionaries(tmp / "dicionarios"))
     window.show()
     app.processEvents()
     window.close()

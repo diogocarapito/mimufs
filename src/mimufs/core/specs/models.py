@@ -195,12 +195,17 @@ Slots = Annotated[
 class _SpecBase(_Model):
     code: str
     title: str = Field(min_length=1)
+    short_title: str | None = Field(None, description="PT-PT label in the navigation")
     group: str = Field(min_length=1, description="Section of the report checklist (PT-PT)")
     level: Level
     required: bool
     purpose: str = Field(min_length=1, description="PT-PT, one line")
     instructions: tuple[str, ...] = Field(min_length=1, description="PT-PT steps")
     slots: Slots
+
+    @property
+    def nav_title(self) -> str:
+        return self.short_title or self.title
 
     def render_instructions(self, *, ano: int | str, unidade: str) -> list[str]:
         """Instructions with ``{ano}`` and ``{unidade}`` filled in (other braces untouched)."""

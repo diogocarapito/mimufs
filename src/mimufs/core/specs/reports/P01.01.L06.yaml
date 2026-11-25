@@ -4,6 +4,7 @@ code: P01.01.L06
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Famílias > Contactos Actuais
+short_title: Famílias
 group: Inscritos
 level: family
 required: false

@@ -4,6 +4,7 @@ code: P04.01.L05
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Novos Problemas > Utente
+short_title: Novos problemas › Utente
 group: Problemas
 level: patient_event
 required: true

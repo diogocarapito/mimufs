@@ -4,6 +4,7 @@ code: P01.01.L03
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Inscritos > Dados dos Utentes
+short_title: Dados dos utentes
 group: Inscritos
 level: patient
 required: true

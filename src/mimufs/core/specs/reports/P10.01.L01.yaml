@@ -4,6 +4,7 @@ code: P10.01.L01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Resultados Biométricos > Utente
+short_title: Biometrias › Utente
 group: Biometrias
 level: patient
 required: true

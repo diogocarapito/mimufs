@@ -1,44 +1,44 @@
-"""Main window, M0 shell: title bar + home placeholder (TECH_SPECS §14.1, docs/ui/).
-
-M1 replaces the placeholder with the real ``HomePage`` (recent projects, new-project dialog,
-dictionaries card) and adds the project layout (PhaseNav, content, validation pane, log).
-"""
+"""Main window: title bar + the landing page or an open project (TECH_SPECS §14.1, docs/ui/)."""
 
 from __future__ import annotations
 
+from datetime import datetime
+from pathlib import Path
 from typing import cast
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
+    QFileDialog,
     QFrame,
     QHBoxLayout,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
-    QSizePolicy,
+    QStackedWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
-from mimufs import __version__, netguard, update
+from mimufs import netguard, update
+from mimufs.core.dictionaries import Dictionaries
+from mimufs.core.project import Project, ProjectError
 from mimufs.gui import strings_pt as S
+from mimufs.gui.dictionaries_dialog import DictionaryManager
+from mimufs.gui.home import HomePage
 from mimufs.gui.iconset import icon, pixmap
+from mimufs.gui.new_project import NewProjectDialog
+from mimufs.gui.project_view import ProjectView
+from mimufs.gui.settings_dialog import SettingsDialog
 from mimufs.gui.theme.palette import TOKENS, ThemeName, apply_theme, current_theme, effective_theme
 from mimufs.gui.update_dialog import UpdateDialog
 from mimufs.gui.workers import Worker, WorkerPool
-from mimufs.settings import SettingsStore
+from mimufs.settings import RecentProject, SettingsStore, data_dir
 
 BADGE_REFRESH_MS = 2000
-
-
-def _label(text: str, role: str | None = None, *, wrap: bool = False) -> QLabel:
-    label = QLabel(text)
-    if role:
-        label.setProperty("role", role)
-    label.setWordWrap(wrap)
-    return label
 
 
 class NetBadge(QWidget):
@@ -87,8 +87,10 @@ class TitleBar(QFrame):
         layout.setContentsMargins(16, 0, 12, 0)
         layout.setSpacing(14)
 
-        self.app_name = QLabel(S.APP_NAME)
+        self.app_name = QPushButton(S.APP_NAME)
         self.app_name.setObjectName("AppName")
+        self.app_name.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.app_name.setFlat(True)
         self.project_name = QLabel(S.NO_PROJECT)
         self.project_name.setObjectName("ProjectName")
         self.net_badge = NetBadge()
@@ -98,8 +100,8 @@ class TitleBar(QFrame):
         self.theme_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.settings_button = QToolButton()
         self.settings_button.setObjectName("IconButton")
-        self.settings_button.setEnabled(False)  # Settings dialog arrives in M1
-        self.settings_button.setToolTip(S.SETTINGS_SOON)
+        self.settings_button.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.settings_button.setToolTip(S.SETTINGS_TITLE)
 
         layout.addWidget(self.app_name)
         layout.addWidget(self.project_name)
@@ -118,98 +120,46 @@ class TitleBar(QFrame):
         self.settings_button.setIcon(icon("settings", t["muted"]))
 
 
-class HomePlaceholder(QWidget):
-    """The landing page's frame; projects, dialogs and dictionaries come in M1."""
-
-    def __init__(self, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        outer = QHBoxLayout(self)
-        outer.setContentsMargins(24, 48, 24, 24)
-        outer.addStretch(1)
-
-        column = QWidget()
-        column.setMaximumWidth(980)
-        column.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
-        body = QVBoxLayout(column)
-        body.setContentsMargins(0, 0, 0, 0)
-        body.setSpacing(6)
-
-        header = QHBoxLayout()
-        titles = QVBoxLayout()
-        titles.setSpacing(6)
-        titles.addWidget(_label(S.HOME_KICKER.format(version=__version__), "kicker"))
-        titles.addWidget(_label(S.HOME_TITLE, "h1"))
-        titles.addWidget(_label(S.HOME_SUBTITLE, "muted", wrap=True))
-        header.addLayout(titles, 1)
-        self.open_button = QPushButton(S.OPEN_PROJECT)
-        self.new_button = QPushButton(S.NEW_PROJECT)
-        self.new_button.setProperty("variant", "primary")
-        for button in (self.open_button, self.new_button):
-            button.setEnabled(False)
-            button.setToolTip(S.COMING_SOON)
-            header.addWidget(button, 0, Qt.AlignmentFlag.AlignBottom)
-        body.addLayout(header)
-        body.addSpacing(22)
-
-        columns = QHBoxLayout()
-        columns.setSpacing(24)
-        left = QVBoxLayout()
-        left.setSpacing(10)
-        left.addWidget(_label(S.RECENT_PROJECTS, "section"))
-        empty = QFrame()
-        empty.setObjectName("Card")
-        empty_layout = QVBoxLayout(empty)
-        empty_layout.setContentsMargins(18, 18, 18, 18)
-        self.empty_label = _label(S.NO_RECENT_PROJECTS, "muted", wrap=True)
-        empty_layout.addWidget(self.empty_label)
-        left.addWidget(empty)
-        left.addStretch(1)
-        columns.addLayout(left, 2)
-
-        right = QVBoxLayout()
-        self.privacy_card = QFrame()
-        self.privacy_card.setObjectName("Card")
-        privacy = QHBoxLayout(self.privacy_card)
-        privacy.setContentsMargins(16, 16, 16, 16)
-        privacy.setSpacing(10)
-        self.privacy_icon = QLabel()
-        self.privacy_icon.setAlignment(Qt.AlignmentFlag.AlignTop)
-        privacy.addWidget(self.privacy_icon)
-        privacy.addWidget(_label(S.PRIVACY_NOTE, "body", wrap=True), 1)
-        right.addWidget(self.privacy_card)
-        right.addStretch(1)
-        columns.addLayout(right, 1)
-        body.addLayout(columns, 1)
-
-        outer.addWidget(column, 6)
-        outer.addStretch(1)
-
-    def apply_theme(self, theme: ThemeName) -> None:
-        self.privacy_icon.setPixmap(pixmap("shield-check", TOKENS[theme]["ok"], 18))
-
-
 class MainWindow(QMainWindow):
-    def __init__(self, store: SettingsStore | None = None) -> None:
+    """Title bar + either the landing page or an open project."""
+
+    def __init__(
+        self,
+        store: SettingsStore | None = None,
+        dictionaries: Dictionaries | None = None,
+    ) -> None:
         super().__init__()
         self.store = store or SettingsStore()
+        self.dictionaries = dictionaries or Dictionaries(data_dir() / "dicionarios")
         self.workers = WorkerPool()
         self.update_dialog: UpdateDialog | None = None
+        self.project: Project | None = None
+        self.view: ProjectView | None = None
         self.setWindowTitle(S.APP_NAME)
-        self.resize(1280, 820)
-        self.setMinimumSize(1024, 680)
+        self.resize(1360, 860)
+        self.setMinimumSize(1100, 700)
 
         central = QWidget()
         layout = QVBoxLayout(central)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
         self.title_bar = TitleBar()
-        self.home = HomePlaceholder()
+        self.pages = QStackedWidget()
+        self.home = HomePage(self.dictionaries)
+        self.pages.addWidget(self.home)
         layout.addWidget(self.title_bar)
-        layout.addWidget(self.home, 1)
+        layout.addWidget(self.pages, 1)
         self.setCentralWidget(central)
 
         self.title_bar.theme_button.clicked.connect(self.toggle_theme)
+        self.title_bar.settings_button.clicked.connect(self.open_settings)
+        self.title_bar.app_name.clicked.connect(self.go_home)
+        self.home.new_requested.connect(self.new_project)
+        self.home.open_requested.connect(self.open_project_dialog)
+        self.home.recent_requested.connect(lambda path: self.open_path(Path(path)))
+        self.home.dictionaries_requested.connect(self.open_dictionaries)
         self.apply_theme(effective_theme(self.store.load().theme))
+        self.refresh_home()
 
         self._badge_timer = QTimer(self)
         self._badge_timer.timeout.connect(self.title_bar.net_badge.refresh)
@@ -226,12 +176,106 @@ class MainWindow(QMainWindow):
         app = cast(QApplication, QApplication.instance())
         apply_theme(app, theme)
         self.title_bar.apply_theme(theme)
-        self.home.apply_theme(theme)
+        self.home.refresh_theme()
+        if self.view is not None:
+            self.view.refresh_theme()
 
     def toggle_theme(self) -> None:
         new: ThemeName = "light" if self.theme == "dark" else "dark"
         self.store.update(theme=new)
         self.apply_theme(new)
+
+    # --------------------------------------------------------------------------- projects
+
+    def refresh_home(self) -> None:
+        self.home.set_recent(self.store.load().recent_projects)
+        self.home.refresh_dictionaries()
+        self.home.refresh_theme()
+
+    def go_home(self) -> None:
+        self.pages.setCurrentWidget(self.home)
+        self.title_bar.project_name.setText(S.NO_PROJECT)
+        self.refresh_home()
+
+    def new_project(self) -> Project | None:
+        dialog = NewProjectDialog(self.store.load().doctor_name, self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        info, folder = dialog.result_info, dialog.result_folder
+        assert info is not None
+        assert folder is not None
+        try:
+            project = Project.create(folder, info)
+        except ProjectError as exc:
+            QMessageBox.warning(self, S.CREATE_FAILED, str(exc))
+            return None
+        if not self.store.load().doctor_name:
+            self.store.update(doctor_name=info.doctor)
+        self.show_project(project)
+        return project
+
+    def open_project_dialog(self) -> None:
+        start = str(Path.home())
+        path, _ = QFileDialog.getOpenFileName(
+            self, S.OPEN_PROJECT_TITLE, start, S.OPEN_PROJECT_FILTER
+        )
+        if path:
+            self.open_path(Path(path))
+
+    def open_path(self, path: Path) -> Project | None:
+        try:
+            project = Project.open(path)
+        except ProjectError as exc:
+            QMessageBox.warning(self, S.OPEN_FAILED, str(exc))
+            return None
+        self.show_project(project)
+        return project
+
+    def show_project(self, project: Project) -> ProjectView:
+        if self.view is not None:
+            self.pages.removeWidget(self.view)
+            self.view.deleteLater()
+        if self.project is not None and self.project is not project:
+            self.workers.wait(10_000)
+            self.project.close()
+        self.project = project
+        self.view = ProjectView(project, self.workers)
+        self.view.progress_changed.connect(self._remember)
+        self.pages.addWidget(self.view)
+        self.pages.setCurrentWidget(self.view)
+        self.title_bar.project_name.setText(project.db_path.name)
+        self._remember(self.view.progress)
+        return self.view
+
+    def _remember(self, progress: str) -> None:
+        if self.project is None:
+            return
+        info = self.project.info
+        self.store.remember_project(
+            RecentProject(
+                path=str(self.project.db_path),
+                name=info.title,
+                doctor=info.doctor,
+                description=info.description,
+                progress=progress,
+                last_opened=datetime.now().replace(microsecond=0),
+            )
+        )
+
+    # ---------------------------------------------------------------------------- dialogs
+
+    def open_settings(self) -> SettingsDialog:
+        dialog = SettingsDialog(self.store, self.workers, parent=self)
+        dialog.theme_changed.connect(lambda t: self.apply_theme(effective_theme(t)))
+        dialog.update_found.connect(self.show_update)
+        dialog.open()
+        return dialog
+
+    def open_dictionaries(self) -> DictionaryManager:
+        dialog = DictionaryManager(self.dictionaries, self)
+        dialog.finished.connect(lambda _r: self.home.refresh_dictionaries())
+        dialog.open()
+        return dialog
 
     # ----------------------------------------------------------------------------- update
 

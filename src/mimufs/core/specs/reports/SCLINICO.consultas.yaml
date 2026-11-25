@@ -1,6 +1,7 @@
 code: SCLINICO.consultas
 source: sclinico_pdf
 title: Lista de consultas realizadas
+short_title: Lista de consultas realizadas
 group: Consultas
 level: patient_event
 required: true

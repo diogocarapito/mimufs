@@ -4,6 +4,7 @@ code: P05.R01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Episódios > Sexo e Grupo Etário
+short_title: Episódios por ICPC
 group: Problemas
 level: doctor
 required: false

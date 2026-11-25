@@ -4,6 +4,7 @@ code: P02.01.R01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Indicadores da unidade funcional
+short_title: Indicadores da unidade
 group: Indicadores
 level: unit
 required: true

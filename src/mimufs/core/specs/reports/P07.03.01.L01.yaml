@@ -4,6 +4,7 @@ code: P07.03.01.L01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Resultados MCDTs > Utente
+short_title: Resultados de análises
 group: Medicação & MCDT
 level: patient
 required: true

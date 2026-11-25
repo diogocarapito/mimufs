@@ -4,6 +4,7 @@ code: P01.01.L01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Inscritos > Utente
+short_title: Inscritos › Utente
 group: Inscritos
 level: patient
 required: true

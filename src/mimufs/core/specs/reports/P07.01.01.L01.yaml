@@ -4,6 +4,7 @@ code: P07.01.01.L01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Listagem de MCDTs Prescritos > Utente
+short_title: MCDT prescritos › Utente
 group: Medicação & MCDT
 level: patient_event
 required: true

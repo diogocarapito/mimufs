@@ -4,6 +4,7 @@ code: P06.01.01.L03
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Listagem de Medicamentos Prescritos por Utente - Marca e DCI
+short_title: Medicamentos › Utente
 group: Medicação & MCDT
 level: patient_event
 required: true

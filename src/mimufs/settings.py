@@ -27,8 +27,14 @@ class RecentProject(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     path: str  # the .mimufs file
-    name: str = ""
+    name: str = ""  # "USF Exemplo · 2024"
+    doctor: str = ""
+    description: str = ""
+    progress: str = ""  # "Passo 02 · 9/18 relatórios"
     last_opened: datetime | None = None
+
+
+MAX_RECENT = 10
 
 
 class Settings(BaseModel):
@@ -90,6 +96,20 @@ class SettingsStore:
         except BaseException:
             Path(tmp).unlink(missing_ok=True)
             raise
+
+    def remember_project(self, entry: RecentProject) -> Settings:
+        """Put a project first in the recent list (one entry per file, at most MAX_RECENT)."""
+        settings = self.load()
+        others = [r for r in settings.recent_projects if r.path != entry.path]
+        settings.recent_projects = [entry, *others][:MAX_RECENT]
+        self.save(settings)
+        return settings
+
+    def forget_project(self, path: str) -> Settings:
+        settings = self.load()
+        settings.recent_projects = [r for r in settings.recent_projects if r.path != path]
+        self.save(settings)
+        return settings
 
     def update(self, **changes: object) -> Settings:
         settings = self.load()

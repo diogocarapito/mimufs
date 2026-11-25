@@ -4,6 +4,7 @@ code: P04.01.L01
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Problemas > Utente
+short_title: Problemas › Utente
 group: Problemas
 level: patient
 required: true

@@ -4,6 +4,7 @@ code: P05.01.L02
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Risco de Diabetes > Nível de Risco por Utente
+short_title: Risco de diabetes
 group: Problemas
 level: patient
 required: false

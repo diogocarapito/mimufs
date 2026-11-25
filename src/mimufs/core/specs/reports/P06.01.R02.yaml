@@ -4,6 +4,7 @@ code: P06.01.R02
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Medicamentos Prescritos > DCI e Medicamento > Médico
+short_title: Medicamentos por DCI e médico
 group: Medicação & MCDT
 level: doctor
 required: false

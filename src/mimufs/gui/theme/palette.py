@@ -128,7 +128,10 @@ QMainWindow, QDialog {{ background: {bg}; }}
 QToolTip {{ background: {panel}; color: {text}; border: 1px solid {border}; padding: 6px; }}
 
 #TitleBar {{ background: {chrome}; border-bottom: 1px solid {border}; }}
-#AppName {{ font-family: "{mono}"; font-size: 14px; font-weight: 700; color: {accent_text}; }}
+#AppName {{
+    font-family: "{mono}"; font-size: 14px; font-weight: 700; color: {accent_text};
+    background: transparent; border: none; padding: 0;
+}}
 #ProjectName {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
 #NetBadge {{ font-family: "{mono}"; font-size: 12px; }}
 #NetBadge[state="ok"] {{ color: {ok}; }}
@@ -170,6 +173,110 @@ QToolButton#IconButton:disabled {{ background: transparent; }}
 QScrollBar:vertical {{ background: transparent; width: 10px; margin: 0; }}
 QScrollBar::handle:vertical {{ background: {border}; border-radius: 4px; min-height: 24px; }}
 QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; width: 0; }}
+QScrollBar:horizontal {{ background: transparent; height: 10px; margin: 0; }}
+QScrollBar::handle:horizontal {{ background: {border}; border-radius: 4px; min-width: 24px; }}
+QScrollArea, QScrollArea > QWidget > QWidget {{ background: transparent; border: none; }}
+
+QLabel[role="mono-muted"] {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
+QLabel[role="code"] {{ font-family: "{mono}"; font-size: 13px; color: {accent_text}; }}
+QLabel[role="small"] {{ font-size: 12px; color: {muted}; }}
+QLabel[role="error"] {{ font-size: 12px; color: {err}; font-weight: 600; }}
+QLabel[role="h3"] {{ font-size: 15px; font-weight: 700; color: {strong}; }}
+QLabel[role="title"] {{ font-size: 24px; font-weight: 700; color: {strong}; }}
+
+QLineEdit, QPlainTextEdit, QTextEdit, QComboBox, QSpinBox {{
+    background: {panel2}; color: {strong}; border: 1px solid {border};
+    border-radius: 4px; padding: 7px 9px; selection-background-color: {accent};
+    selection-color: {on_accent};
+}}
+QLineEdit:focus, QPlainTextEdit:focus, QComboBox:focus {{ border-color: {accent}; }}
+QLineEdit[invalid="true"] {{ border-color: {err}; }}
+QComboBox QAbstractItemView {{ background: {panel}; color: {text}; border: 1px solid {border}; }}
+QCheckBox {{ spacing: 8px; }}
+
+QPushButton[variant="link"] {{
+    background: transparent; border: none; color: {accent_text}; padding: 0;
+    font-family: "{mono}"; font-size: 12px; text-decoration: underline;
+}}
+QPushButton[variant="danger"] {{ color: {err}; }}
+
+#Sidebar {{ background: {chrome}; border-right: 1px solid {border}; }}
+#ProjectHeader {{ border-bottom: 1px solid {border}; }}
+QTreeWidget#PhaseNav {{
+    background: transparent; border: none; outline: none; color: {text}; font-size: 14px;
+    selection-background-color: {panel}; selection-color: {strong};
+}}
+QTreeWidget#PhaseNav::branch:selected {{ background: transparent; }}
+QTreeWidget#PhaseNav::item {{ padding: 5px 4px; border: none; }}
+QTreeWidget#PhaseNav::item:selected {{ background: {panel}; color: {strong}; }}
+QTreeWidget#PhaseNav::item:hover:!selected {{ background: {panel2}; }}
+QTreeWidget#PhaseNav::branch {{ background: transparent; }}
+#NavCounts {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
+
+#TopBar {{ border-bottom: 1px solid {border}; }}
+#Breadcrumb {{ font-family: "{mono}"; font-size: 13px; color: {muted}; }}
+#StatusPill {{ border: 1px solid {muted}; border-radius: 12px; }}
+#StatusPill[state="ok"] {{ border-color: {ok}; }}
+#StatusPill[state="warn"] {{ border-color: {warn}; }}
+#StatusPill[state="err"] {{ border-color: {err}; }}
+#StatusPillText {{ font-weight: 600; }}
+#StatusPillText[state="ok"] {{ color: {ok}; }}
+#StatusPillText[state="warn"] {{ color: {warn}; }}
+#StatusPillText[state="err"] {{ color: {err}; }}
+#StatusPillText[state="pend"] {{ color: {muted}; }}
+
+#SlotTile {{ background: {panel}; border: 1px solid {border}; border-radius: 6px; }}
+#SlotTile[state="err"] {{ border-color: {err}; }}
+#SlotTile[state="warn"] {{ border-color: {warn}; }}
+#SlotTileLabel {{ font-weight: 700; color: {strong}; }}
+#SlotTileState {{ font-family: "{mono}"; font-size: 11px; color: {muted}; }}
+#SlotTileState[state="ok"] {{ color: {ok}; }}
+#SlotTileState[state="warn"] {{ color: {warn}; }}
+#SlotTileState[state="err"] {{ color: {err}; }}
+
+#StepsCard {{ background: {panel2}; border: 1px solid {border}; border-radius: 6px; }}
+#StepNumber {{ font-family: "{mono}"; color: {accent_text}; }}
+#DropZone {{ border: 1px dashed {muted}; border-radius: 6px; background: transparent; }}
+#DropZone[hover="true"] {{ border-color: {accent}; background: {panel}; }}
+#DropTitle {{ font-weight: 700; color: {strong}; }}
+
+#ValidationPane {{ border-left: 1px solid {border}; }}
+#IssueCard {{ background: {panel}; border: 1px solid {border}; border-radius: 6px; }}
+#IssueMessage {{ font-weight: 700; color: {strong}; }}
+#IssueWhere {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
+#InfoLabel {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
+#InfoRow {{ border-bottom: 1px solid {line}; }}
+
+#LogPanel {{ border-top: 1px solid {border}; background: {chrome}; }}
+QToolButton#LogToggle {{
+    background: transparent; border: none; font-family: "{mono}"; font-size: 11px;
+    font-weight: 600; color: {muted};
+}}
+QPlainTextEdit#LogText {{
+    background: transparent; border: none; padding: 0; font-family: "{mono}"; font-size: 12px;
+    color: {text};
+}}
+#Footer {{ border-top: 1px solid {border}; }}
+#FooterText {{ font-family: "{mono}"; font-size: 12px; color: {muted}; }}
+
+QTableWidget, QTableView {{
+    background: {panel}; alternate-background-color: {panel2}; color: {text};
+    border: 1px solid {border}; gridline-color: {line}; selection-background-color: {panel2};
+    selection-color: {strong};
+}}
+QHeaderView::section {{
+    background: {panel2}; color: {muted}; border: none; border-bottom: 1px solid {border};
+    padding: 6px; font-family: "{mono}"; font-size: 11px; font-weight: 600;
+}}
+QTabWidget::pane {{ border: 1px solid {border}; border-radius: 4px; top: -1px; }}
+QTabBar::tab {{
+    background: transparent; color: {muted}; padding: 8px 14px; border: none;
+    border-bottom: 2px solid transparent;
+}}
+QTabBar::tab:selected {{ color: {strong}; border-bottom-color: {accent}; }}
+#RecentCard {{ background: {panel}; border: 1px solid {border}; border-radius: 6px; }}
+#RecentCard:hover {{ border-color: {muted}; }}
+#RecentTitle {{ font-size: 16px; font-weight: 700; color: {strong}; }}
 """
 
 

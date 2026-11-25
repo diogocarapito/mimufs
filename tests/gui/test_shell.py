@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication, QLabel, QPushButton
 from pytestqt.qtbot import QtBot
 
 from mimufs import update
+from mimufs.core.dictionaries import Dictionaries
 from mimufs.gui import strings_pt as S
 from mimufs.gui.main_window import MainWindow
 from mimufs.gui.theme.palette import TOKENS, build_qss, current_theme
@@ -27,8 +28,8 @@ def store(tmp_path: Path) -> SettingsStore:
 
 
 @pytest.fixture
-def window(qtbot: QtBot, store: SettingsStore) -> MainWindow:
-    win = MainWindow(store)
+def window(qtbot: QtBot, store: SettingsStore, tmp_path: Path) -> MainWindow:
+    win = MainWindow(store, Dictionaries(tmp_path / "dicionarios"))
     qtbot.addWidget(win)
     win.show()
     return win
@@ -45,16 +46,16 @@ def _info(*, supported: bool = True) -> update.UpdateInfo:
     )
 
 
-def test_window_opens_on_the_home_placeholder(window: MainWindow) -> None:
+def test_window_opens_on_the_home_page(window: MainWindow) -> None:
     assert window.windowTitle() == "mimufs"
     assert window.title_bar.app_name.text() == "mimufs"
     assert window.title_bar.project_name.text() == S.NO_PROJECT
+    assert window.pages.currentWidget() is window.home
     texts = {label.text() for label in window.home.findChildren(QLabel)}
-    assert {S.HOME_TITLE, S.PRIVACY_NOTE, S.NO_RECENT_PROJECTS} <= texts
-    # Project actions arrive in M1: visible but disabled, with an explanation.
-    for button in (window.home.open_button, window.home.new_button):
-        assert not button.isEnabled()
-        assert button.toolTip() == S.COMING_SOON
+    assert {S.HOME_TITLE, S.PRIVACY_NOTE, S.NO_RECENT_PROJECTS, S.DICTIONARIES} <= texts
+    assert window.home.open_button.isEnabled()
+    assert window.home.new_button.isEnabled()
+    assert window.title_bar.settings_button.isEnabled()
 
 
 def test_theme_toggle_persists_and_restyles(window: MainWindow, store: SettingsStore) -> None:
@@ -75,7 +76,7 @@ def test_theme_toggle_persists_and_restyles(window: MainWindow, store: SettingsS
 
 def test_saved_theme_is_applied_on_start(qtbot: QtBot, store: SettingsStore) -> None:
     store.update(theme="light")
-    win = MainWindow(store)
+    win = MainWindow(store, Dictionaries(store.path.parent / "dicionarios"))
     qtbot.addWidget(win)
     app = QApplication.instance()
     assert isinstance(app, QApplication)

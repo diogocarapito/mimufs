@@ -4,6 +4,7 @@ code: P02.01.R04
 source: mimuf
 doctor_pages_default: total_or_project_doctor
 title: Indicadores por lista de utentes de médico - cumpridores e não cumpridores
+short_title: Cumpridores por médico
 group: Indicadores
 level: doctor
 required: false
