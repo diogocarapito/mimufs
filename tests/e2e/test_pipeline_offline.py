@@ -5,9 +5,11 @@ uninstalled, so never in the pytest process) while pytest-socket blocks sockets 
 make **zero** network attempts. On Linux, CI also runs this file inside ``unshare --net``, which
 cuts off every process, the Java subprocess included.
 
-M0 scope: synthetic fixtures → parse + bind every MIM@UF file → SClínico CSV (+ PDF through
-tabula when Java is available) → the bundle selftest. Each milestone extends it (project,
-import, aggregate, quality, export).
+M0: synthetic fixtures → parse + bind every MIM@UF file → SClínico CSV (+ PDF through tabula
+when Java is available) → the bundle selftest.
+M1: create a project → import every valid file in one drop (sorted by content) → every report
+🟢 and the gate open → each broken scenario in its own project → the expected statuses.
+Later milestones extend it (aggregate, quality, export).
 """
 
 from __future__ import annotations
@@ -60,6 +62,34 @@ for name, fx in sorted(fixtures.items()):
         summary["mimuf_files"] += 1
         summary["mimuf_rows"] += raw.n_rows
 summary["expected_pdf_rows"] = fixtures["sclinico/pdf"].n_rows
+
+# M1: project → import → validation
+from mimufs.core.project import Project, ProjectInfo
+from mimufs.core.validation.result import Status
+from tests.fixtures import broken
+
+info = ProjectInfo(unit=make_fixtures.UNIT, doctor=make_fixtures.PROJECT_DOCTOR,
+                   years=(make_fixtures.YEAR,))
+project = Project.create(out / "projeto", info)
+valid = [f.path for f in fixtures.values() if f.kind == "valid"]
+outcomes = project.import_paths(valid)
+states = project.overview()
+summary["imported"] = sum(o.file_id is not None for o in outcomes)
+summary["not_valid"] = sorted(c for c, s in states.items()
+                              if s.status is not Status.VALID and s.available)
+summary["gate"] = all(s.passes for s in states.values())
+project.close()
+mismatches = []
+for name, sc in broken.generate_scenarios(out).items():
+    if sc.code is None:
+        continue
+    p = Project.create(out / "cenarios" / name, info)
+    p.import_paths(list(sc.files))
+    got = {(i.check_id, int(i.severity)) for i in p.report_state(sc.code).issues}
+    if got != {(c, int(v)) for c, v in sc.expect}:
+        mismatches.append(name)
+    p.close()
+summary["scenario_mismatches"] = mismatches
 before = netguard.stats()
 summary["blocked_before_selftest"] = before.blocked
 summary["allowed"] = before.allowed
@@ -86,6 +116,11 @@ def test_pipeline_runs_offline(tmp_path: Path) -> None:
     assert summary["errors"] == []
     assert summary["mimuf_files"] >= 17 + 44  # header examples + one valid file per slot
     assert summary["mimuf_rows"] > 0
+    # M1: a complete import validates and opens the gate; broken fixtures raise their issues
+    assert summary["imported"] == 44
+    assert summary["not_valid"] == []
+    assert summary["gate"] is True
+    assert summary["scenario_mismatches"] == []
     if summary["pdf_rows"] is not None:
         assert summary["pdf_rows"] == summary["expected_pdf_rows"]
     # Not a single network attempt by the pipeline; the update check never ran.
