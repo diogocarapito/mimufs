@@ -8,9 +8,12 @@
     ├── exports/
     └── logs/
 
-Every operation opens its own short-lived connection (``connect()``), so the GUI thread and
-worker threads never share one. Importing a file never changes or deletes earlier data; removing
-a file deletes its rows from the project tables but keeps its byte copy in ``raw/``.
+Each thread gets its own long-lived connection (``connect()``), so the GUI thread and worker
+threads never share one, and nothing pays DuckDB's connect cost per query. ``close()`` closes
+them all (the window calls it when it switches projects).
+
+Importing a file never changes or deletes earlier data; removing a file deletes its rows from
+the project tables but keeps its byte copy in ``raw/``.
 
 Patient data stays in this folder. Nothing here logs cell values (CLAUDE.md rule 2).
 """
@@ -22,8 +25,9 @@ import json
 import logging
 import re
 import shutil
+import threading
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -34,6 +38,7 @@ import polars as pl
 
 from mimufs import __version__
 from mimufs.core import db
+from mimufs.core.readers import sclinico_pdf
 from mimufs.core.readers.excel import FileFormat, UnreadableFileError
 from mimufs.core.readers.mimuf_header import (
     HeaderParseError,
@@ -182,12 +187,17 @@ class ReportState:
         return sum(s.status not in (Status.PENDING, Status.SKIPPED) for s in self.slots)
 
     @property
+    def available(self) -> bool:
+        """False for a report the app can't import yet (SClínico, until its reader is ready)."""
+        return isinstance(self.spec, MimufReportSpec) or sclinico_pdf.PDF_READER_READY
+
+    @property
     def passes(self) -> bool:
         """Can phase 02 be left with this report as it is?"""
         if self.skipped:
             return True
         if self.status is Status.PENDING:
-            return not self.spec.required
+            return not self.spec.required or not self.available
         if self.status is Status.WARNING:
             return self.acknowledged
         return self.status is Status.VALID
@@ -217,6 +227,9 @@ class Project:
         self.exports_dir = self.folder / "exports"
         self.logs_dir = self.folder / "logs"
         self._specs = load_specs()
+        self._local = threading.local()
+        self._connections: list[duckdb.DuckDBPyConnection] = []
+        self._lock = threading.Lock()
 
     # ------------------------------------------------------------------ create / open
 
@@ -277,11 +290,23 @@ class Project:
 
     @contextmanager
     def connect(self) -> Iterator[duckdb.DuckDBPyConnection]:
-        con = db.connect(self.db_path)
-        try:
-            yield con
-        finally:
-            con.close()
+        """This thread's connection to the project database (opened on first use)."""
+        con: duckdb.DuckDBPyConnection | None = getattr(self._local, "con", None)
+        if con is None:
+            con = db.connect(self.db_path)
+            self._local.con = con
+            with self._lock:
+                self._connections.append(con)
+        yield con
+
+    def close(self) -> None:
+        """Close every connection (all threads). The project can be used again afterwards."""
+        with self._lock:
+            for con in self._connections:
+                with suppress(duckdb.Error):
+                    con.close()
+            self._connections.clear()
+        self._local = threading.local()
 
     # ------------------------------------------------------------------------ info
 
@@ -349,11 +374,16 @@ class Project:
             outcomes.append(outcome)
             if outcome.code and outcome.file_id is not None:
                 touched.add(outcome.code)
+        report_issues: dict[str, list[Issue]] = {}
         for code in touched:
-            self.revalidate(code)
+            issues = self.revalidate(code)
+            report_issues[code] = [i for i in issues if i.file_id is None]
         final = [self._final_outcome(o) for o in outcomes]
         for o in final:
             self._log_outcome(o)
+        for code, issues in report_issues.items():
+            for issue in issues:
+                self.log_event(issue.check_id, code, issue.message)
         if progress:
             progress(100, "")
         return final

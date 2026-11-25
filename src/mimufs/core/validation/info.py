@@ -101,7 +101,7 @@ def build_card(project: Project, state: ReportState) -> InfoCard:
         filters[spec.slots.filter_key] = ", ".join(values)
     rows.append(("Filtros", "; ".join(f"{k}: {v}" for k, v in filters.items()) or "—"))
 
-    names = ", ".join(f.original_name for f in state.files)
+    names = M.listing((f.original_name for f in state.files), limit=3)
     rows.append(("Ficheiros", f"{len(state.files)} · {names}"))
 
     total = sum(f.n_rows for f in state.files)

@@ -28,6 +28,10 @@ from pathlib import Path
 
 import polars as pl
 
+#: False until Diogo's tabula script is ported (TECH_SPECS §10.1). While False, the SClínico
+#: report can't be imported and does not block phase 02's gate.
+PDF_READER_READY = False
+
 OUTPUT_COLUMNS = ("data_consulta", "utente", "nop", "profissional", "tipo_consulta", "local")
 REQUIRED_COLUMNS = OUTPUT_COLUMNS[:5]
 PDF_MAGIC = b"%PDF-"

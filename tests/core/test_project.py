@@ -78,7 +78,8 @@ def test_import_the_valid_set(tmp_path: Path, synthetic_fixtures: dict[str, mf.F
     for code, state in overview.items():
         if code.startswith("SCLINICO"):
             assert state.status is Status.PENDING
-            assert not state.passes  # required, not imported yet
+            assert not state.available  # waits for the PDF reader (TECH_SPECS §10.1)
+            assert state.passes  # so it doesn't block the gate meanwhile
             continue
         assert state.status is Status.VALID, code
         assert state.filled == len(state.slots), code
