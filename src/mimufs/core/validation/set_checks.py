@@ -6,11 +6,12 @@ its ``file_id``; the others belong to the report.
 
 from __future__ import annotations
 
+import difflib
 from collections import Counter, defaultdict
 from collections.abc import Sequence
 from dataclasses import dataclass
 
-from mimufs.core.readers.mimuf_header import RawSheet
+from mimufs.core.readers.mimuf_header import RawSheet, bind_columns, is_total
 from mimufs.core.specs.models import IcpcSetsSlots, MimufReportSpec, MonthCoverageSlots
 from mimufs.core.validation import messages as M
 from mimufs.core.validation.context import ProjectCtx, norm_text
@@ -199,6 +200,39 @@ def check_structure(files: Sequence[ReportFile]) -> list[Issue]:
     return [_issue("S04.columns", Status.ERROR, items=M.listing(odd))]
 
 
+def report_doctors(spec: MimufReportSpec, files: Sequence[ReportFile]) -> list[str]:
+    """Distinct doctors in the report's doctor column (P01.01.L01: the family doctors)."""
+    cols = spec.header.by_role("doctor")
+    names: set[str] = set()
+    for f in files:
+        data = bind_columns(f.raw, spec).data
+        if cols and cols[0].name in data.columns:
+            names |= {
+                v for v in data[cols[0].name].drop_nulls().unique().to_list() if not is_total(v)
+            }
+    return sorted(names)
+
+
+def closest_doctors(doctor: str, names: Sequence[str], n: int = 3) -> list[str]:
+    """The names most like the project's doctor, best first."""
+    by_norm = {norm_text(name): name for name in names}
+    found = difflib.get_close_matches(norm_text(doctor), list(by_norm), n=n, cutoff=0.0)
+    return [by_norm[k] for k in found]
+
+
+def check_project_doctor(spec: MimufReportSpec, files: Sequence[ReportFile],
+                         project: ProjectCtx) -> list[Issue]:  # fmt: skip
+    """S05: the project's doctor appears in the list of family doctors (PRD §6.2)."""
+    if not spec.doctor_list or not project.doctor:
+        return []
+    names = report_doctors(spec, files)
+    if not names or any(project.is_project_doctor(n) for n in names):
+        return []
+    closest = closest_doctors(project.doctor, names)
+    return [_issue("S05.doctor", Status.WARNING, doctor=project.doctor,
+                   closest=" · ".join(closest))]  # fmt: skip
+
+
 def check_report(
     spec: MimufReportSpec, files: Sequence[ReportFile], project: ProjectCtx
 ) -> list[Issue]:
@@ -213,4 +247,5 @@ def check_report(
     issues += check_icpc_coverage(spec, distinct)
     issues += check_consistency(spec, distinct)
     issues += check_structure(distinct)
+    issues += check_project_doctor(spec, distinct, project)
     return issues

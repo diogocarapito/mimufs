@@ -223,6 +223,9 @@ class MimufReportSpec(_SpecBase):
     doctor_pages: tuple[str, ...] = ()
     doctor_pages_default: Literal["total_or_project_doctor"] = "total_or_project_doctor"
     no_pages: bool = False
+    doctor_list: bool = Field(
+        False, description="Its doctor column lists the unit's family doctors (check S05)"
+    )
 
     @field_validator("code")
     @classmethod

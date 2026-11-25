@@ -53,6 +53,7 @@ class IssueCard(QFrame):
 
 class ValidationPane(QWidget):
     acknowledge_requested = Signal(str)
+    doctor_chosen = Signal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -62,10 +63,18 @@ class ValidationPane(QWidget):
         self.layout_.setSpacing(10)
         self.summary = ""
         self.copy_button: QPushButton | None = None
+        self.doctor_buttons: list[QPushButton] = []
 
-    def show_report(self, state: ReportState, card: InfoCard,
-                    rejected: Sequence[ImportOutcome] = ()) -> None:  # fmt: skip
+    def show_report(
+        self,
+        state: ReportState,
+        card: InfoCard,
+        rejected: Sequence[ImportOutcome] = (),
+        doctors: Sequence[str] = (),
+    ) -> None:
+        """``doctors``: names to offer when the project's doctor isn't in the list (S05)."""
         clear(self.layout_)
+        self.doctor_buttons = []
         lay = self.layout_
         if rejected:
             lay.addWidget(label(S.LAST_IMPORT, "section"))
@@ -78,6 +87,15 @@ class ValidationPane(QWidget):
             lay.addWidget(label(S.NO_ISSUES, "muted"))
         for issue in state.issues:
             lay.addWidget(IssueCard(issue))
+            if issue.check_id == "S05":
+                for name in doctors:
+                    button = QPushButton(S.USE_DOCTOR.format(name=name))
+                    button.clicked.connect(lambda _=False, n=name: self.doctor_chosen.emit(n))
+                    self.doctor_buttons.append(button)
+                    row = QHBoxLayout()
+                    row.addWidget(button)
+                    row.addStretch(1)
+                    lay.addLayout(row)
         if state.status is Status.WARNING:
             if state.acknowledged:
                 lay.addWidget(StatusLine(Status.VALID, S.ACKNOWLEDGE_DONE))

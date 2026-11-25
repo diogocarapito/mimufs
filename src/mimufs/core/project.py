@@ -52,7 +52,12 @@ from mimufs.core.validation import messages as M
 from mimufs.core.validation.checks import check_file
 from mimufs.core.validation.context import ProjectCtx
 from mimufs.core.validation.result import Issue, Status, status_of, worst
-from mimufs.core.validation.set_checks import ReportFile, check_report
+from mimufs.core.validation.set_checks import (
+    ReportFile,
+    check_report,
+    closest_doctors,
+    report_doctors,
+)
 from mimufs.core.validation.slots import Placement, SlotDef, expected_slots
 
 log = logging.getLogger(__name__)
@@ -611,6 +616,23 @@ class Project:
         self.log_event(
             "OK", code, f"Avisos confirmados pelo utilizador ({n}): continuar mesmo assim."
         )
+
+    def doctor_candidates(self, code: str = "P01.01.L01", n: int = 3) -> list[str]:
+        """Doctors of a doctor-list report, most like the project's doctor first (S05)."""
+        spec = self._specs.get(code)
+        if not isinstance(spec, MimufReportSpec):
+            return []
+        files = [
+            ReportFile(
+                f.file_id,
+                f.original_name,
+                f.sha256,
+                self.load_sheet(f.file_id),
+                Placement(f.slot_keys, f.months, f.period),
+            )
+            for f in self.files(code)
+        ]
+        return closest_doctors(self.info.doctor, report_doctors(spec, files), n)
 
     # ------------------------------------------------------------------- read state
 

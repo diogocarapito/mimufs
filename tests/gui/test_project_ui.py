@@ -157,6 +157,25 @@ def test_acknowledge_warnings_from_the_pane(
     assert "0 aviso" in view.counts.text()
 
 
+def test_pick_the_doctor_name_from_the_list(
+    qtbot: QtBot, window: MainWindow, tmp_path: Path, synthetic_fixtures: dict[str, mf.Fixture]
+) -> None:
+    """S05: a doctor typed differently from MIM@UF → 🟠 with the closest names to pick."""
+    info = ProjectInfo(unit=mf.UNIT, doctor="Medico Sintetico Un", years=(mf.YEAR,))
+    view = window.show_project(Project.create(tmp_path / "p", info))
+    paths = [
+        f.path for f in synthetic_fixtures.values() if f.kind == "valid" and f.code == "P01.01.L01"
+    ]
+    import_and_wait(qtbot, view, paths)
+    view.select(("report", "P01.01.L01"))
+    assert view.pill.text.text() == S.STATUS_WARNING
+    first = view.pane.doctor_buttons[0]
+    assert first.text() == S.USE_DOCTOR.format(name="MEDICO SINTETICO UM: M 00001")
+    first.click()
+    assert view.project.info.doctor == "MEDICO SINTETICO UM: M 00001"
+    assert view.pill.text.text() == S.STATUS_VALID
+
+
 def test_remove_a_duplicate(
     qtbot: QtBot, window: MainWindow, tmp_path: Path, broken_scenarios: dict[str, Scenario]
 ) -> None:

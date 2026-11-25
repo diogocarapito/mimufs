@@ -155,6 +155,7 @@ class ProjectView(QWidget):
 
         self.pane = ValidationPane()
         self.pane.acknowledge_requested.connect(self._acknowledge)
+        self.pane.doctor_chosen.connect(self._choose_doctor)
         pane_scroll = FitScrollArea(self.pane)
         pane_scroll.setMinimumWidth(340)
         self.pane_scroll = pane_scroll
@@ -346,7 +347,12 @@ class ProjectView(QWidget):
             card = build_card(self.project, state)
             dropped_here = self.last_target == state.code
             mine = [o for o in rejected if dropped_here or o.code in (None, state.code)]
-            self.pane.show_report(state, card, mine)
+            doctors = (
+                self.project.doctor_candidates(state.code)
+                if any(i.check_id == "S05" for i in state.issues)
+                else []
+            )
+            self.pane.show_report(state, card, mine, doctors)
             crumbs += [state.spec.group, state.code]
         elif key[0] == "gate":
             self.gate_page.show_overview(list(self.states.values()))
@@ -455,6 +461,11 @@ class ProjectView(QWidget):
             self.project.set_skipped(code, skipped)
         except ProjectError as exc:
             QMessageBox.warning(self, S.SKIP_REPORT, str(exc))
+        self.refresh()
+
+    def _choose_doctor(self, name: str) -> None:
+        """S05: use the doctor's name exactly as MIM@UF writes it."""
+        self.project.update_info(doctor=name)
         self.refresh()
 
     def _save_info(self, unit: str, doctor: str, description: str) -> None:

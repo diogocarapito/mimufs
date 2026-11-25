@@ -160,6 +160,11 @@ TEMPLATES: dict[str, tuple[str, str | None]] = {
         "{n} códigos ICPC aparecem em mais de um ficheiro: {items}.",
         "Não é grave: as linhas repetidas são removidas na agregação. Confirme e continue.",
     ),
+    # S05 — the project's doctor in the list of family doctors (PRD §6.2)
+    "S05.doctor": (
+        "O médico do projeto («{doctor}») não aparece entre os médicos de família deste relatório.",
+        "Escolha o nome exato (por exemplo: {closest}) ou corrija-o em «01 Projeto».",
+    ),
     # S03 / S04 — consistency across the files of a report
     "S03.inconsistent": (
         "Os ficheiros deste relatório não têm {what} igual: {items}.",

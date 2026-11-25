@@ -127,6 +127,29 @@ def test_ids_counted_for_info_card(broken_scenarios: dict[str, Scenario]) -> Non
     assert id_counts(check_file(raw, SPECS["P10.01.L01"], CTX, "x").bound) == (2, 1)
 
 
+def test_project_doctor_in_the_family_doctor_list(
+    synthetic_fixtures: dict[str, mf.Fixture],
+) -> None:
+    """S05 (PRD §6.2): after P01.01.L01, the project's doctor must be one of its doctors."""
+    paths = [
+        f.path for f in synthetic_fixtures.values() if f.kind == "valid" and f.code == "P01.01.L01"
+    ]
+    assert run_report("P01.01.L01", paths) == []  # "MEDICO SINTETICO UM: M 00001" is listed
+    typo = ProjectCtx(unit=mf.UNIT, doctor="Medico Sintetico Un", years=(mf.YEAR,))
+    issues = run_report("P01.01.L01", paths, typo)
+    assert [(i.check_id, i.severity) for i in issues] == [("S05", Status.WARNING)]
+    assert "(«Medico Sintetico Un») não aparece" in issues[0].message
+    assert issues[0].fix_hint
+    assert issues[0].fix_hint.startswith("Escolha o nome exato (por exemplo: MEDICO SINTETICO UM")
+    no_doctor = ProjectCtx(unit=mf.UNIT, doctor="", years=(mf.YEAR,))
+    assert run_report("P01.01.L01", paths, no_doctor) == []
+    # Only doctor-list reports are checked (P04.01.L05 has doctor pages, not a list).
+    other = [
+        f.path for f in synthetic_fixtures.values() if f.kind == "valid" and f.code == "P10.01.L01"
+    ]
+    assert run_report("P10.01.L01", other, typo) == []
+
+
 # ------------------------------------------------------------------------- unit tests
 
 
