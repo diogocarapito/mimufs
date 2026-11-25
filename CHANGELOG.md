@@ -19,7 +19,7 @@ Primeira versão de teste publicada (M0 — Fundações). Ainda não processa pr
 
 ### Adicionado
 
-- Primeira versão instalável para Windows, macOS 14 ou mais recente (Apple Silicon e Intel) e Linux.
+- Primeira versão instalável para Windows e macOS 14 ou mais recente (Apple Silicon e Intel). Linux numa versão futura.
 - Leitura dos ficheiros exportados do MIM@UF (incluindo os `.xls` que na verdade são `.xlsx`).
 - Reconhecimento automático dos 17 relatórios do MIM@UF a partir do cabeçalho de cada ficheiro.
 - Java incluído na aplicação para ler o PDF de consultas do SClínico (não é preciso instalar nada).

@@ -18,8 +18,6 @@ DOWNLOADS = (
     ("Windows (instalador, sem administrador)", "mimufs-windows-x64.msi"),
     ("macOS — Apple Silicon (M1 ou mais recente)", "mimufs-macos-arm64.dmg"),
     ("macOS — Intel", "mimufs-macos-x64.dmg"),
-    ("Linux — Ubuntu/Debian (.deb)", "mimufs-linux-x86_64.deb"),
-    ("Linux — Flatpak (qualquer distribuição)", "mimufs-linux-x86_64.flatpak"),
 )
 
 

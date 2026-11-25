@@ -673,6 +673,8 @@ All UI text lives in `gui/strings_pt.py` (keyed constants). Report instructions 
 
 ### 16.1 Artefacts (stable names → stable download links)
 
+**Linux is deferred** (decided 2026-11-25): the first releases ship Windows and macOS only. The Linux matrix entry in `release.yml` is commented out and its steps are kept; see §19.
+
 Briefcase names files `<app>-<version>…`; CI renames them to the stable names below before uploading.
 
 | OS | Artefact | Briefcase command | Notes |
@@ -681,8 +683,8 @@ Briefcase names files `<app>-<version>…`; CI renames them to the stable names 
 | Windows x64 | `mimufs-windows-x64.msi` | `briefcase package windows -p msi --adhoc-sign` | `system_installer = false` → **per-user install, no admin**. Needs WiX + .NET Framework 3.5 on the build runner |
 | macOS arm64 | `mimufs-macos-arm64.dmg` | `briefcase package macOS --adhoc-sign` | Unsigned; site explains *Definições › Privacidade e Segurança › Abrir mesmo assim*. Built on an Apple Silicon runner, `universal_build = false` |
 | macOS x86_64 | `mimufs-macos-x64.dmg` | same, on an Intel runner | Intel Macs (confirmed). Built on a GitHub-hosted Intel macOS runner (check the current label, e.g. `macos-15-intel`) |
-| Linux x86_64 | `mimufs-linux-x86_64.deb` | `briefcase package linux system` | Ubuntu/Debian. Briefcase can target other distros (e.g. `.rpm`) through its Docker builds if there is demand |
-| Linux x86_64 | `mimufs-linux-x86_64.flatpak` | `briefcase package linux flatpak` | Any distro; `flatpak install --user` needs no admin |
+| Linux x86_64 *(deferred)* | `mimufs-linux-x86_64.deb` | `briefcase package linux system` | Ubuntu/Debian. Briefcase can target other distros (e.g. `.rpm`) through its Docker builds if there is demand |
+| Linux x86_64 *(deferred)* | `mimufs-linux-x86_64.flatpak` | `briefcase package linux flatpak` | Any distro; `flatpak install --user` needs no admin |
 
 AppImage is **not** shipped: Briefcase supports it only on a best-effort basis, and `.deb` + Flatpak cover Linux users more reliably.
 
@@ -746,7 +748,7 @@ Then:
 
 | Milestone | Engineering tasks | Done when |
 |---|---|---|
-| **M0** | Tag `legacy-autogui`; new layout and `pyproject`; netguard + update module; openpyxl reader (with compat patch) + format sniffing + header/filter parser; jlinked JRE + tabula smoke test on all 3 OSes; spec models + 3 sample specs; fixture generator; CI matrix; Briefcase bundles (zip, msi, dmg ×2, deb, flatpak) with `--selftest`; site skeleton + DNS + `version.json` | A bundle downloaded from mimufs.com launches on all 3 OSes and detects a newer test version |
+| **M0** | Tag `legacy-autogui`; new layout and `pyproject`; netguard + update module; openpyxl reader (with compat patch) + format sniffing + header/filter parser; jlinked JRE + tabula smoke test on all 3 OSes; spec models + 3 sample specs; fixture generator; CI matrix; Briefcase bundles (zip, msi, dmg ×2, deb, flatpak) with `--selftest`; site skeleton + DNS + `version.json` | A bundle downloaded from mimufs.com launches on all 3 OSes and detects a newer test version. *Scoped to Windows + macOS on 2026-11-25 (Linux deferred, §19)* |
 | **M1 (PoC)** | HomePage + NewProjectDialog (Unidade, Médico, Descrição) → opens phase 02; dictionaries loaded (medication editable in DictionaryManager); parser passes on every sheet of `MIMUF_Header_examples.xlsx`; PhaseNav with sub-steps + footer navigation + "Rever e continuar" gate; SlotGrid + DropZone + InfoCard + IssueList + LogPanel; dark/light themes; ICPC copy helper; checks V01–V12, S01–S04; specs for P01.01.L01, P04.01.L01, P04.01.L05, P06.01.01.L03, P10.01.L01, P07.03.01.L01 | Deliberately broken fixtures produce the right 🟢/🟠/🔴 and messages in the UI |
 | **M2** | Remaining specs; staging; patient spine; pivots; aggregates; join diagnostics; data dictionary | Golden dataset test passes; 30k × 800 < 30 s |
 | **M3** | Rule engine; HbA1c resolver; labs + biometrics rules; RuleReview UI; audit log | Synthetic dirty-value suite passes; audit log complete |
@@ -767,6 +769,7 @@ Also settled: the duplicate ICPC codes in set 2 were a mistake and have been rem
 - [ ] **Indicator dictionary updater** (`scripts/update_indicadores.py`, maintainer-only): port the scraping/PDF extraction from `github.com/diogocarapito/datasets_indicadores` (`scripts/extracao_indicadores_intervalos.py`, `sdm_crawler_scrapper.py`) to regenerate `indicadores_intervalos.csv`, print a diff, bump the version in `dictionaries.json`. Source file: https://github.com/diogocarapito/datasets_indicadores/blob/main/datasets/indicadores_intervalos_esperados_aceitaveis.csv
 - [ ] Decide on the 20 ICPC codes not in the MIM@UF sets (PRD §12.2 item 3) and the doctor-page question (item 1).
 - [ ] Confirm the real format of MIM@UF exports: openpyxl only reads OOXML, so if it opens them, they are `.xlsx` files with an `.xls` name. The sniffing in §5.0 handles both cases either way.
+- [ ] **Linux release (deferred 2026-11-25)**: re-enable the `linux-x86_64` entry in `release.yml`. State when paused: the `.deb` builds, installs and passes `--selftest` on Ubuntu 24.04 (after installing `system_runtime_requires` from pyproject); the Flatpak builds and packages, the install step now uses `--reinstall` (untested), and the KDE runtime 6.9 is end-of-life on Flathub: move `flatpak_runtime_version` to a supported branch. Restore the Linux download card and install notes on the site, the two Linux lines in `scripts/release_notes.py` and `tests/test_site.py`.
 - [ ] Bundle Inter and JetBrains Mono (OFL) in `gui/fonts/` (M1); `gui/app.py` already loads any `.ttf`/`.otf` placed there.
 - [ ] `author_email` for `[tool.briefcase]` (the `.deb` Maintainer field); left unset on purpose until Diogo picks an address.
 

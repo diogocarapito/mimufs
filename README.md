@@ -3,7 +3,7 @@
 [![CI](https://github.com/diogocarapito/mimufs/actions/workflows/ci.yml/badge.svg)](https://github.com/diogocarapito/mimufs/actions/workflows/ci.yml)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue.svg)](LICENSE)
 
-**mimufs** is a free desktop app (macOS, Windows, Linux) for Portuguese family-medicine units (USF/UCSP). It guides a clinician step by step from "I have never used these MIM@UF reports" to a clean, validated, patient-level dataset:
+**mimufs** is a free desktop app (Windows and macOS; Linux planned) for Portuguese family-medicine units (USF/UCSP). It guides a clinician step by step from "I have never used these MIM@UF reports" to a clean, validated, patient-level dataset:
 
 1. **Extraction & import**: click-by-click instructions for each MIM@UF report, then drag & drop the exported files. mimufs recognises each file and checks it (unit, period, filters, columns, truncation, duplicates), and explains what is wrong and how to fix it.
 2. **Aggregation**: all files are merged into one dataset, one row per patient.

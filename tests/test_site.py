@@ -96,9 +96,7 @@ def test_download_links_use_the_stable_artefact_names() -> None:
         "mimufs-windows-x64.msi",
         "mimufs-macos-arm64.dmg",
         "mimufs-macos-x64.dmg",
-        "mimufs-linux-x86_64.deb",
-        "mimufs-linux-x86_64.flatpak",
-    }
+    }  # Linux (.deb, Flatpak) is deferred to a later release (TECH_SPECS §19)
 
 
 def test_domain_and_favicon() -> None:

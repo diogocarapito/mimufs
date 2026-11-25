@@ -61,7 +61,9 @@ jobs:
           - { os: windows-latest, target: windows, label: windows-x64 }
           - { os: macos-latest, target: macOS, label: macos-arm64 }
           - { os: macos-15-intel, target: macOS, label: macos-x64 }
-          - { os: ubuntu-24.04, target: linux, label: linux-x86_64 }
+          # Linux (.deb + Flatpak) is deferred to a later release (TECH_SPECS §19). The Linux
+          # steps below stay in place; re-add this entry to build it again:
+          # - { os: ubuntu-24.04, target: linux, label: linux-x86_64 }
     runs-on: ${{ matrix.os }}
     timeout-minutes: 120
     defaults:
@@ -133,7 +135,7 @@ jobs:
           uv run briefcase create linux flatpak --no-input
           uv run briefcase build linux flatpak --no-input
           uv run briefcase package linux flatpak --no-input
-          flatpak install --user -y --noninteractive dist/*.flatpak
+          flatpak install --user -y --noninteractive --reinstall dist/*.flatpak
           flatpak run com.mimufs.mimufs --selftest | tee flatpak-selftest.txt
           grep -qx "selftest passed" flatpak-selftest.txt
 
