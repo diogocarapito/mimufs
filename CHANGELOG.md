@@ -13,6 +13,21 @@ Notas para quem mantém o projeto (em inglês, como o resto do código):
 
 ## [Não publicado]
 
+M1 — Extração e importação.
+
+### Adicionado
+
+- Página inicial com projetos recentes, «Novo projeto» e «Abrir projeto…».
+- Cada projeto é uma pasta no seu computador, com cópia exata de cada ficheiro importado.
+- Passo «Extração & Importação»: um sub-passo por relatório, com as extrações necessárias, as instruções e uma zona para largar ficheiros ou pastas.
+- O mimufs reconhece o relatório e a extração (mês, trimestre, lote ICPC, análise, tipo de dado) pelo cabeçalho de cada ficheiro, sem depender do nome.
+- Verificações de cada ficheiro e de cada relatório (V01–V12, S01–S05), cada uma a dizer o que está mal, onde e como corrigir.
+- Botão «Copiar códigos» para colar os 3 lotes de códigos ICPC no MIM@UF.
+- «Continuar mesmo assim» para avisos aceites, e relatórios opcionais que podem ser dispensados.
+- «Rever e continuar»: o estado de todos os relatórios e a importação de todos os ficheiros de uma vez.
+- Ficha de metadados por relatório, com «copiar resumo».
+- Definições (médico, tema, verificação de novas versões) e gestão dos dicionários (medicamentos editável).
+
 ## [0.0.2] - 2026-11-24
 
 Primeira versão de teste publicada (M0 — Fundações). Ainda não processa projetos.

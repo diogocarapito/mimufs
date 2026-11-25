@@ -196,6 +196,7 @@ Each imported file is parsed into **metadata** (report code and title, filter ex
 | S02 | ICPC coverage (P04.01.L01): union of the ICPC codes in all batch filters covers the target ICPC list | 🟠 list of missing codes · 🟠 codes in more than one batch (overlaps are fine but flagged) |
 | S03 | Consistent unit and flags across all files of the report | 🔴 |
 | S04 | Column structure identical across all files of the report | 🔴 |
+| S05 | The project's doctor is one of the family doctors in P01.01.L01 (§6.2) | 🟠 with the closest names; one click uses the exact MIM@UF name |
 
 Every issue message answers three questions: **what** is wrong, **where** (file, row/cell or slot), and **how to fix it** (e.g. "Volte ao MIM@UF, P04.01.L05, escolha Mês = 2024-07 e exporte novamente").
 
@@ -272,6 +273,7 @@ The project database and the patient dataset are designed so that a Visualizatio
 - Step 1 lists "Lista de consultas realizadas (SClínico)" as a report.
 - The user drops the **PDF** exported from SClínico Administrativo. The app reads it locally with tabula (it ships its own Java, so nothing needs installing), using the logic from Diogo's working script.
 - Fallback: a CSV with the documented columns, for when the PDF can't be read.
+- Until the importer exists (M4), the report is listed with a note and does **not** block "Rever e continuar" (decided 2026-11-25, so the M1 gate can be passed).
 
 ### 7.2 Update notifier
 

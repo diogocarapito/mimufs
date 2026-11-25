@@ -187,12 +187,14 @@ duckdb.connect(
 
 | Table | Purpose |
 |---|---|
-| `project` | name, unit, years[], doctor_name (as in MIM@UF), created_at, app_version, ruleset_version |
-| `files` | file_id, sha256, original_name, raw_path, report_code, slot_key, n_rows, imported_at, status |
-| `file_meta` | file_id, section (`title`/`filter`/`pages`), key, value |
-| `issues` | issue_id, file_id NULL, report_code, check_id, severity, message, location, fix_hint |
-| `acknowledgements` | target (step/report/file), issue_ids, acknowledged_at, note |
-| `raw_<report>` | every source column as VARCHAR + `file_id`, `row_num` (exactly what was read) |
+| `meta` | key/value project info: schema_version, name, unit, doctor (as in MIM@UF), description, years (JSON), created_at, app_version (ruleset_version from M3) |
+| `files` | file_id, sha256, original_name, raw_path, report_code, imported_at, format, the parsed metadata needed to rebuild the sheet (code_source, title, filter_text, pages JSON, header/header2 JSON, stored columns, removed footer rows), n_rows, max_row, and from validation slot_keys/months (JSON), period, status |
+| `issues` | issue_id, report_code, file_id NULL, check_id, severity, message, location, fix_hint (re-written by every re-validation of the report) |
+| `report_state` | report_code, skipped (optional reports), acknowledged_at + ack_digest + ack_note ("Continuar mesmo assim"; valid only while the report's issues hash to `ack_digest`) |
+| `event_log` | ts, kind (`OK` or a check id), report_code, message: the validation log panel; counts and file names only |
+| `raw_<report>` | every source column as VARCHAR + `file_id`, `row_num` (exactly what was read; `drop: true` columns never stored) |
+
+As built in M1: filter and Páginas live as text/JSON in `files` (re-parsed with the same tokenizer) instead of a separate `file_meta` table, so a stored file can be rebuilt as a `RawSheet` and re-validated whenever the project changes (new file, removed file, edited unit or doctor). Each thread keeps one connection per project (`Project.connect()`), because opening a DuckDB connection costs ~9 ms and a GUI refresh issues dozens of queries.
 | `stg_<report>` | typed, renamed, normalised rows + `patient_key`, `file_id`, `slot_key` |
 | `patients` | wide patient dataset (built in step 2) |
 | `ev_problems`, `ev_new_problems`, `ev_prescriptions`, `ev_mcdt`, `ev_appointments` | long event tables |
@@ -333,6 +335,8 @@ header:
     - { at: 8, header: Resultado Último Registo, name: Resultado Último Registo, type: str, parse: decimal_pt }
 ```
 
+Report keys added in M1 (optional): `short_title` (PT-PT label in the navigation), `doctor_list` (check S05), and `slots.labels` for `values` slots (tile labels such as `PAs`, `HbA1c`).
+
 Column keys: `at` (0-based position), `header` (exact text in the file, `""` = untitled), `name` (canonical), `type` (`str | cat | int | float | date | ignore`), `role` (`sns | nop | doctor | unit | icpc | medication | exam | indicator | prescriber | period`), `required`, `pii`, `drop`, `export_default`, `row2` (metric name lives in header row 2), `match: startswith`, `parse: decimal_pt`.
 
 Output mapping to the patient dataset (`to_patients`) is added per spec in M2, following the column-naming rules in §8.
@@ -387,10 +391,13 @@ class ValidationResult:
     info: dict  # data for the info card
 ```
 
-- File checks (V01–V12) and set checks (S01–S04) are pure functions `(RawSheet | list[RawSheet], ReportSpec, ProjectCtx) -> list[Issue]`, registered in a dict so specs can disable or override severities.
-- Status aggregation: file → slot (worst file in the slot) → report (worst slot; empty required slots = WARNING) → step (worst required report). Skipped optional reports are ignored.
+- File checks (V01–V12) and set checks (S01–S05) are pure functions `(RawSheet | list[RawSheet], ReportSpec, ProjectCtx) -> list[Issue]`, registered in a dict so specs can disable or override severities.
+- As built (M1), in `core/validation/`: `slots.py` (expected slots per kind and year; placing a file in its slot(s) from metadata, which is where V04 and the slot part of V06 happen), `checks.py` (V03, V05–V10), `set_checks.py` (V11, S01–S05), `result.py`, `info.py` (the info card). V01/V02 happen at import in `core/project.py`: refused files are never stored, only explained. V12 is not an issue: the footer is removed and shown on the info card.
+- Status aggregation: file → slot (worst file in the slot; a quarter partly covered by monthly files is 🟠) → report (worst file and report issue) → step. A report **passes** the gate when it is 🟢, skipped (optional only), 🟠 and acknowledged, or pending and optional. Acknowledgement records a hash of the issues it accepted: when the issues change, the user confirms again. Errors can't be acknowledged.
 - V09 (truncation): the ceiling depends on the **real** format found by sniffing (§5.0): 1,048,576 rows for OOXML (what openpyxl reads), 65,536 for legacy BIFF. A file at the ceiling is 🔴. If MIM@UF has its own export row limit, it is added to the spec as `max_export_rows` once known.
-- Messages and fix hints come from templates in `strings_pt.py`, with placeholders such as `{expected_month}` and `{report_path}`.
+- Messages and fix hints come from PT-PT templates in **`core/validation/messages.py`** (not `gui/strings_pt.py`: checks live in `core`, which must not import the GUI), with placeholders such as `{period}`, `{expected}`, `{key}`. A test renders every template.
+- S05 (PRD §6.2): for specs with `doctor_list: true` (P01.01.L01), the project's doctor must be one of the doctors in the file; otherwise 🟠 with the closest names (difflib), which the pane offers as one-click "Usar «…»" buttons.
+- Test fixtures: `tests/fixtures/broken.py` builds one scenario per check (the valid set of a report with one mutation) with the exact `(check_id, severity)` set it must produce; the same expectations are asserted on the pure checks, through project storage, in the UI and in the offline e2e test.
 
 ---
 
@@ -621,6 +628,7 @@ Chosen direction: **B v2, console style**. The window is fixed, and the panes in
 ```
 
 - **Start**: with no project open, the central area shows `HomePage` (no PhaseNav). Creating or opening a project switches to the layout above. Mockups: `docs/ui/mimufs-ui-v2-home-*.png`, `…-new-project-dark.png`.
+- **As built (M1)**: `gui/home.py`, `new_project.py`, `project_view.py` (PhaseNav as a `QTreeWidget`, breadcrumb, status pill, footer, log), `report_page.py` (slot tiles, steps, ICPC helper, drop zone, file list), `panes.py` (validation pane, gate, phase 01, locked phases), `settings_dialog.py`, `dictionaries_dialog.py`, `status.py` (status → icon + colour token + PT-PT label), `widgets.py`. Pages and the validation pane sit in `FitScrollArea`, which sizes content by height-for-width (Qt's `widgetResizable` ignores it and squashes wrapped labels). The validation pane is hidden on the gate unless files were just refused, so the table gets the width.
 - `PhaseNav`: a `QTreeView` over a `PhaseModel`. Top level = phases, children = sub-steps; section headers are rendered as non-selectable rows. Expand and collapse are free, including for locked phases (preview only). Only sub-steps of unlocked phases can be selected.
 - Each phase defines an ordered list of sub-steps, which drives the footer *Anterior / Seguinte* buttons and the "Sub-passo n de N" counter. The last sub-step of each phase is a **gate** ("Rever e continuar") that unlocks the next phase.
 - Splitters (`QSplitter`) between nav/content, content/validation and content/log, with sizes persisted in settings.
@@ -749,7 +757,7 @@ Then:
 | Milestone | Engineering tasks | Done when |
 |---|---|---|
 | **M0** | Tag `legacy-autogui`; new layout and `pyproject`; netguard + update module; openpyxl reader (with compat patch) + format sniffing + header/filter parser; jlinked JRE + tabula smoke test on all 3 OSes; spec models + 3 sample specs; fixture generator; CI matrix; Briefcase bundles (zip, msi, dmg ×2, deb, flatpak) with `--selftest`; site skeleton + DNS + `version.json` | A bundle downloaded from mimufs.com launches on all 3 OSes and detects a newer test version. *Scoped to Windows + macOS on 2026-11-25 (Linux deferred, §19)* |
-| **M1 (PoC)** | HomePage + NewProjectDialog (Unidade, Médico, Descrição) → opens phase 02; dictionaries loaded (medication editable in DictionaryManager); parser passes on every sheet of `MIMUF_Header_examples.xlsx`; PhaseNav with sub-steps + footer navigation + "Rever e continuar" gate; SlotGrid + DropZone + InfoCard + IssueList + LogPanel; dark/light themes; ICPC copy helper; checks V01–V12, S01–S04; specs for P01.01.L01, P04.01.L01, P04.01.L05, P06.01.01.L03, P10.01.L01, P07.03.01.L01 | Deliberately broken fixtures produce the right 🟢/🟠/🔴 and messages in the UI |
+| **M1 (PoC)** | HomePage + NewProjectDialog (Unidade, Médico, Descrição) → opens phase 02; dictionaries loaded (medication editable in DictionaryManager); parser passes on every sheet of `MIMUF_Header_examples.xlsx`; PhaseNav with sub-steps + footer navigation + "Rever e continuar" gate; SlotGrid + DropZone + InfoCard + IssueList + LogPanel; dark/light themes; ICPC copy helper; checks V01–V12, S01–S04; specs for P01.01.L01, P04.01.L01, P04.01.L05, P06.01.01.L03, P10.01.L01, P07.03.01.L01 | Deliberately broken fixtures produce the right 🟢/🟠/🔴 and messages in the UI. *Built 2026-11-25: all 17 MIM@UF reports import and validate (not only the 6 listed), plus check S05 (project doctor); the SClínico importer stays for M4.* |
 | **M2** | Remaining specs; staging; patient spine; pivots; aggregates; join diagnostics; data dictionary | Golden dataset test passes; 30k × 800 < 30 s |
 | **M3** | Rule engine; HbA1c resolver; labs + biometrics rules; RuleReview UI; audit log | Synthetic dirty-value suite passes; audit log complete |
 | **M4** | Mapping store + MappingBoard; SClínico PDF reader (tabula, ported from Diogo's script) + CSV fallback; exports + pseudonymisation + manifest; settings; help | **v0.1.0** released via the pipeline |
