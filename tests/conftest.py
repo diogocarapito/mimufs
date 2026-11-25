@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.fixtures import make_fixtures
+from tests.fixtures import broken, make_fixtures
 
 # Qt widget tests never need a display (CI runners have none on Linux).
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
@@ -28,3 +28,9 @@ def synthetic_fixtures(
 ) -> dict[str, make_fixtures.Fixture]:
     """Every synthetic fixture (valid files per slot, variants, SClínico), generated once."""
     return make_fixtures.generate(tmp_path_factory.mktemp("synthetic"))
+
+
+@pytest.fixture(scope="session")
+def broken_scenarios(tmp_path_factory: pytest.TempPathFactory) -> dict[str, broken.Scenario]:
+    """Deliberately broken fixtures, one per check (M1), generated once."""
+    return broken.generate_scenarios(tmp_path_factory.mktemp("broken"))

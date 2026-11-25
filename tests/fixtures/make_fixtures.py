@@ -989,7 +989,12 @@ def generate(
 def main(argv: list[str]) -> int:
     out = Path(argv[1]) if len(argv) > 1 else DEFAULT_OUT
     fixtures = generate(out)
-    print(f"{len(fixtures)} fixtures written to {out}")
+    if str(REPO_ROOT) not in sys.path:  # run as a script: make `tests` importable
+        sys.path.insert(0, str(REPO_ROOT))
+    from tests.fixtures import broken
+
+    scenarios = broken.generate_scenarios(out)
+    print(f"{len(fixtures)} fixtures and {len(scenarios)} broken scenarios written to {out}")
     return 0
 
 

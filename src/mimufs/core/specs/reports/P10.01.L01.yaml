@@ -24,6 +24,12 @@ slots:
     pas: (?i)^(tas|pas|t\.?a\.?\s*sist|press[aã]o.*sist)
     pad: (?i)^(tad|pad|t\.?a\.?\s*diast|press[aã]o.*diast)
     dm_desde: (?i)(dm|diabetes)\s*desde
+  labels:
+    peso: Peso
+    altura: Altura
+    pas: PAs
+    pad: PAd
+    dm_desde: DM desde
   note: 'Exemplos reais: ''Altura(Cm)'', ''TAd''. Padrões a confirmar com os 5 nomes reais.'
 pages_expect:
   Flag Médico Família: C/ Med Fam

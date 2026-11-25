@@ -26,6 +26,14 @@ slots:
     hba1c: (?i)(hba1c|hemoglobina\s*a1c|glicada)
     creatinina: (?i)creatinin
     albuminuria: (?i)(albumin|microalb)
+  labels:
+    colesterol_total: Colesterol total
+    hdl: HDL
+    trigliceridos: Triglicerídeos
+    ldl: LDL
+    hba1c: HbA1c
+    creatinina: Creatinina
+    albuminuria: Albuminúria
   note: 'Exemplo real: ''651029:Colesterol total, s/l''. Valor = ''código:nome''. Padrões a confirmar com os nomes reais das 7 análises; um exame não reconhecido pede ao utilizador que escolha a variável.'
 pages_expect:
   Flag Médico Família: C/ Med Fam

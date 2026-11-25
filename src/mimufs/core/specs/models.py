@@ -136,8 +136,21 @@ class ValuesSlots(_SlotsBase):
     key: str = Field(pattern=r"^filter\..+")
     months: tuple[Month, ...] = Field(min_length=1)
     values: dict[str, str] = Field(min_length=1)
+    labels: dict[str, str] = Field(
+        default_factory=dict, description="PT-PT tile label per slot id (default: the id)"
+    )
 
     _check_months = field_validator("months")(_unique_months)
+
+    @model_validator(mode="after")
+    def _labels_for_known_slots(self) -> ValuesSlots:
+        unknown = set(self.labels) - set(self.values)
+        if unknown:
+            raise ValueError(f"labels for unknown slot ids: {sorted(unknown)}")
+        return self
+
+    def label(self, slot_id: str) -> str:
+        return self.labels.get(slot_id, slot_id)
 
     @field_validator("values")
     @classmethod
