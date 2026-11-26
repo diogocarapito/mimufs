@@ -35,7 +35,7 @@ from mimufs.gui.project_view import ProjectView
 from mimufs.gui.settings_dialog import SettingsDialog
 from mimufs.gui.theme.palette import TOKENS, ThemeName, apply_theme, current_theme, effective_theme
 from mimufs.gui.update_dialog import UpdateDialog
-from mimufs.gui.workers import Worker, WorkerPool
+from mimufs.gui.workers import Worker, WorkerPool, install_gc_guard
 from mimufs.settings import RecentProject, SettingsStore, data_dir
 
 BADGE_REFRESH_MS = 2000
@@ -131,6 +131,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.store = store or SettingsStore()
         self.dictionaries = dictionaries or Dictionaries(data_dir() / "dicionarios")
+        install_gc_guard()  # Qt objects must only be destroyed in the GUI thread
         self.workers = WorkerPool()
         self.update_dialog: UpdateDialog | None = None
         self.project: Project | None = None

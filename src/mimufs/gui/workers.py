@@ -3,17 +3,54 @@
 ``Worker(fn, *args)`` runs ``fn(*args)`` in the global :class:`QThreadPool` and reports back
 through queued signals, so slots always run on the GUI thread. With ``with_progress=True`` the
 function also receives ``progress=callback(percent, message)``.
+
+:class:`MainThreadGC`: Python's cyclic garbage collector runs in whichever thread happens to
+allocate, so it could destroy Qt widgets from a worker thread, which crashes (seen on Linux CI).
+While the GUI runs, automatic collection is off and a timer collects in the GUI thread instead.
 """
 
 from __future__ import annotations
 
+import gc
 import logging
 from collections.abc import Callable
 from typing import Any
 
-from PySide6.QtCore import QObject, QRunnable, QThreadPool, Signal
+from PySide6.QtCore import QCoreApplication, QObject, QRunnable, QThreadPool, QTimer, Signal
 
 log = logging.getLogger(__name__)
+
+
+class MainThreadGC(QObject):
+    """Collect garbage only in the GUI thread (the approach pyqtgraph uses)."""
+
+    INTERVAL_MS = 1000
+
+    def __init__(self, parent: QObject | None = None) -> None:
+        super().__init__(parent)
+        self.threshold = gc.get_threshold()
+        gc.disable()
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.check)
+        self.timer.start(self.INTERVAL_MS)
+
+    def check(self) -> None:
+        count0, count1, count2 = gc.get_count()
+        if count0 > self.threshold[0]:
+            gc.collect(0)
+            if count1 > self.threshold[1]:
+                gc.collect(1)
+                if count2 > self.threshold[2]:
+                    gc.collect(2)
+
+
+def install_gc_guard() -> MainThreadGC | None:
+    """Once per application; called when the main window is created."""
+    app = QCoreApplication.instance()
+    if app is None:
+        return None
+    existing = app.findChild(MainThreadGC)
+    return existing if existing is not None else MainThreadGC(app)
 
 
 class WorkerSignals(QObject):

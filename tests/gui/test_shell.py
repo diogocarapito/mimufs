@@ -194,3 +194,16 @@ def test_worker_reports_failure_without_raising(qtbot: QtBot) -> None:
     with qtbot.waitSignal(worker.signals.failed, timeout=5000) as blocker:
         WorkerPool().start(worker)
     assert isinstance(blocker.args[0], ValueError)
+
+
+def test_garbage_is_collected_in_the_gui_thread_only(window: MainWindow) -> None:
+    """Workers must never run the cyclic GC: it could destroy Qt widgets off the GUI thread."""
+    import gc
+
+    from mimufs.gui.workers import MainThreadGC, install_gc_guard
+
+    assert not gc.isenabled()
+    guard = install_gc_guard()
+    assert isinstance(guard, MainThreadGC)
+    assert install_gc_guard() is guard  # one per application
+    guard.check()  # runs without error in the GUI thread
