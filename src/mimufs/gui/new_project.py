@@ -32,6 +32,14 @@ def default_parent() -> Path:
     return Path(platformdirs.user_documents_dir()) / "mimufs"
 
 
+def display_path(path: Path) -> str:
+    """``~/…`` for paths under the user's home folder (expanded again on create)."""
+    try:
+        return "~/" + path.relative_to(Path.home()).as_posix()
+    except ValueError:
+        return str(path)
+
+
 def year_options(today: date | None = None) -> list[tuple[str, tuple[int, ...]]]:
     """Previous year first (the default), then older years and 2-year ranges (max 2 years)."""
     year = (today or date.today()).year
@@ -70,17 +78,20 @@ class NewProjectDialog(QDialog):
         self.description.setFixedHeight(64)
         self._field(layout, S.FIELD_DESCRIPTION, self.description, None, None)
 
-        row = QHBoxLayout()
-        row.setSpacing(12)
-        year_box = QVBoxLayout()
-        year_box.addWidget(label(S.FIELD_YEAR, "h3"))
+        layout.addSpacing(6)
+        layout.addWidget(label(S.FIELD_YEAR, "h3"))
         self.year = QComboBox()
         for text, years in year_options():
             self.year.addItem(text, years)
-        year_box.addWidget(self.year)
-        row.addLayout(year_box, 1)
-        folder_box = QVBoxLayout()
-        folder_box.addWidget(label(S.FIELD_FOLDER, "h3"))
+        self.year.setMinimumWidth(160)
+        year_row = QHBoxLayout()
+        year_row.addWidget(self.year)
+        year_row.addStretch(1)
+        layout.addLayout(year_row)
+
+        # The folder gets a full-width row so the whole path stays readable.
+        layout.addSpacing(6)
+        layout.addWidget(label(S.FIELD_FOLDER, "h3"))
         folder_row = QHBoxLayout()
         self.folder = QLineEdit()
         self.folder.textEdited.connect(self._mark_folder_edited)
@@ -88,10 +99,7 @@ class NewProjectDialog(QDialog):
         choose.clicked.connect(self._choose_folder)
         folder_row.addWidget(self.folder, 1)
         folder_row.addWidget(choose)
-        folder_box.addLayout(folder_row)
-        row.addLayout(folder_box, 3)
-        layout.addSpacing(4)
-        layout.addLayout(row)
+        layout.addLayout(folder_row)
 
         warning = QHBoxLayout()
         warning.setSpacing(8)
@@ -142,18 +150,23 @@ class NewProjectDialog(QDialog):
     def _mark_folder_edited(self) -> None:
         self._folder_edited = True
 
+    def _show_folder(self, path: Path) -> None:
+        """The whole path, home shown as ``~``: ``~/Documents/mimufs/USF_Exemplo_2025``."""
+        self.folder.setText(display_path(path))
+        self.folder.setCursorPosition(0)
+
     def _update_folder(self) -> None:
         if self._folder_edited:
             return
         name = default_name(self.unit.text().strip() or "USF", self.years)
-        self.folder.setText(str(default_parent() / name))
+        self._show_folder(default_parent() / name)
 
     def _choose_folder(self) -> None:
         start = str(default_parent())
         chosen = QFileDialog.getExistingDirectory(self, S.FIELD_FOLDER, start)
         if chosen:
             name = default_name(self.unit.text().strip() or "USF", self.years)
-            self.folder.setText(str(Path(chosen) / name))
+            self._show_folder(Path(chosen) / name)
             self._folder_edited = True
 
     def _show_error(self, widget: QLineEdit, error: QLabel, text: str) -> None:

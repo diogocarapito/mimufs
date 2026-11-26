@@ -298,3 +298,17 @@ def test_dictionary_manager_edits_medication(qtbot: QtBot, tmp_path: Path) -> No
     assert not dialog.pages["icpc2"].editable
     tab.search.setText("tirzepatido")
     assert tab.count.text() == S.DICT_ROWS.format(shown=1, total=76)
+
+
+def test_new_project_folder_is_shown_whole(qtbot: QtBot) -> None:
+    dialog = NewProjectDialog("")
+    qtbot.addWidget(dialog)
+    dialog.unit.setText("USF Exemplo")
+    text = dialog.folder.text()
+    assert text.startswith("~/")
+    assert text.endswith("/mimufs/USF_Exemplo_" + str(dialog.years[0]))
+    assert dialog.folder.cursorPosition() == 0  # the start of the path is visible
+    dialog.doctor.setText("X")
+    dialog.create_button.click()
+    assert dialog.result_folder is not None
+    assert dialog.result_folder.is_absolute()  # "~" expanded when the project is created
