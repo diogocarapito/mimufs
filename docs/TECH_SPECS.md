@@ -119,7 +119,7 @@ mimufs/
 │       ├── app.py
 │       ├── main_window.py
 │       ├── theme/palette.py       # token tables → QPalette + generated QSS
-│       ├── fonts/                 # Inter, JetBrains Mono (OFL) — TODO M1, system fonts until then
+│       ├── fonts/                 # Inter 4.1, JetBrains Mono 2.304 (static TTFs, OFL licences)
 │       ├── icons/ (Tabler SVGs, app.png) + iconset.py (recolours SVGs from theme tokens)
 │       ├── update_dialog.py
 │       ├── strings_pt.py          # all UI strings, keyed (future i18n)
@@ -628,11 +628,12 @@ Chosen direction: **B v2, console style**. The window is fixed, and the panes in
 ```
 
 - **Start**: with no project open, the central area shows `HomePage` (no PhaseNav). Creating or opening a project switches to the layout above. Mockups: `docs/ui/mimufs-ui-v2-home-*.png`, `…-new-project-dark.png`.
+- Python's cyclic GC is switched off while the GUI runs and run by a timer in the GUI thread (`workers.MainThreadGC`): otherwise it can run in a worker thread and destroy Qt widgets there, which crashes (seen on Linux CI).
 - **As built (M1)**: `gui/home.py`, `new_project.py`, `project_view.py` (PhaseNav as a `QTreeWidget`, breadcrumb, status pill, footer, log), `report_page.py` (slot tiles, steps, ICPC helper, drop zone, file list), `panes.py` (validation pane, gate, phase 01, locked phases), `settings_dialog.py`, `dictionaries_dialog.py`, `status.py` (status → icon + colour token + PT-PT label), `widgets.py`. Pages and the validation pane sit in `FitScrollArea`, which sizes content by height-for-width (Qt's `widgetResizable` ignores it and squashes wrapped labels). The validation pane is hidden on the gate unless files were just refused, so the table gets the width.
 - `PhaseNav`: a `QTreeView` over a `PhaseModel`. Top level = phases, children = sub-steps; section headers are rendered as non-selectable rows. Expand and collapse are free, including for locked phases (preview only). Only sub-steps of unlocked phases can be selected.
 - Each phase defines an ordered list of sub-steps, which drives the footer *Anterior / Seguinte* buttons and the "Sub-passo n de N" counter. The last sub-step of each phase is a **gate** ("Rever e continuar") that unlocks the next phase.
 - Splitters (`QSplitter`) between nav/content, content/validation and content/log, with sizes persisted in settings.
-- Style: **Fusion** style plus QSS generated from a **token palette with two themes** (`dark`, `light`; same token names as the mockup: `bg, chrome, panel, panel2, border, line, text, strong, muted, accent, ok, warn, err, pend`). A theme toggle in the title bar is persisted in settings, with "seguir o sistema" as the default. Inter and JetBrains Mono are to be bundled in `gui/fonts/` (TODO M1; until then the closest system fonts are picked, never downloaded); icons are Tabler, recoloured from the theme tokens.
+- Style: **Fusion** style plus QSS generated from a **token palette with two themes** (`dark`, `light`; same token names as the mockup: `bg, chrome, panel, panel2, border, line, text, strong, muted, accent, ok, warn, err, pend`). A theme toggle in the title bar is persisted in settings, with "seguir o sistema" as the default. Inter and JetBrains Mono are bundled in `gui/fonts/` (static TTFs + OFL licences, loaded at start-up; never downloaded); icons are Tabler, recoloured from the theme tokens.
 - Status is never shown by colour alone: the badges combine icon, colour and label.
 
 ### 14.2 Key widgets
@@ -778,7 +779,6 @@ Also settled: the duplicate ICPC codes in set 2 were a mistake and have been rem
 - [ ] Decide on the 20 ICPC codes not in the MIM@UF sets (PRD §12.2 item 3) and the doctor-page question (item 1).
 - [ ] Confirm the real format of MIM@UF exports: openpyxl only reads OOXML, so if it opens them, they are `.xlsx` files with an `.xls` name. The sniffing in §5.0 handles both cases either way.
 - [ ] **Linux release (deferred 2026-11-25)**: re-enable the `linux-x86_64` entry in `release.yml`. State when paused: the `.deb` builds, installs and passes `--selftest` on Ubuntu 24.04 (after installing `system_runtime_requires` from pyproject); the Flatpak builds and packages, the install step now uses `--reinstall` (untested), and the KDE runtime 6.9 is end-of-life on Flathub: move `flatpak_runtime_version` to a supported branch. Restore the Linux download card and install notes on the site, the two Linux lines in `scripts/release_notes.py` and `tests/test_site.py`.
-- [ ] Bundle Inter and JetBrains Mono (OFL) in `gui/fonts/` (M1); `gui/app.py` already loads any `.ttf`/`.otf` placed there.
 - [ ] `author_email` for `[tool.briefcase]` (the `.deb` Maintainer field); left unset on purpose until Diogo picks an address.
 
 **TODO — Claude Code implementation step** (Diogo provides these when the implementation starts; until then the modules are written against the interfaces in §5.0.1 and §10.1, with tests marked `xfail`):

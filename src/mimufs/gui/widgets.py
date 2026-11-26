@@ -109,6 +109,7 @@ class StatusLine(QWidget):
         layout.setSpacing(6)
         ic = QLabel()
         ic.setPixmap(status_pixmap(status, 14))
+        ic.setContentsMargins(0, 3, 0, 0)  # level with the first line of text
         layout.addWidget(ic, 0, Qt.AlignmentFlag.AlignTop)
         layout.addWidget(label(text, wrap=True), 1)
 
