@@ -346,13 +346,13 @@ def generate_scenarios(out_dir: Path) -> dict[str, Scenario]:
     )
 
     # V11 — duplicates
-    l03 = b.rows("P01.01.L03", f"{y}-12")
-    b.add(
-        "V11_same_file",
-        "P01.01.L03",
-        [("V11", W)],
-        extra=[("P01.01.L03_copia", copy.deepcopy(l03))],
-        contains=["Ficheiro idêntico"],
+    # A byte copy: writing the same rows twice is not enough, OOXML embeds a timestamp.
+    b.add("V11_same_file", "P01.01.L03", [("V11", W)], contains=["Ficheiro idêntico"])
+    original = b.scenarios["V11_same_file"].files[0]
+    duplicate = original.with_name("P01.01.L03_copia.xls")
+    shutil.copyfile(original, duplicate)
+    b.scenarios["V11_same_file"] = dataclasses.replace(
+        b.scenarios["V11_same_file"], files=(original, duplicate)
     )
     shorter = b.rows("P10.01.L01", "altura")[:-5]
     b.add(
